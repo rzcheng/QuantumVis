@@ -1,15 +1,22 @@
 [build-system]
-requires = ["setuptools==80.9.0", "wheel==0.45.1"]
+requires = ["setuptools>=77", "wheel>=0.45"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "quantaforge"
 version = "0.1.0"
-description = "A correctness-first quantum state-vector simulator with a planned Triton backend"
+description = "A quantum state-vector CPU reference and initial optional Triton backend"
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [{name = "Ryan Cheng"}]
 dependencies = ["numpy>=2.0,<3"]
+
+[project.optional-dependencies]
+gpu = [
+  "torch>=2.6,<3; platform_system == 'Linux'",
+  "triton>=3.2,<4; platform_system == 'Linux'",
+]
+dev = ["pytest>=9,<10", "ruff>=0.15,<1", "build>=1.4,<2"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
