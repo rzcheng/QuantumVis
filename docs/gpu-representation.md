@@ -1,7 +1,7 @@
 # GPU amplitude representation decision
 
-Decision date: 2026-09-14. Status: proposed for Milestone 2; no GPU kernel has
-been compiled, executed, or benchmarked in this repository yet.
+Decision date: 2026-09-14. Status: implemented in initial source for Milestone 2;
+no GPU kernel has been compiled, executed, or benchmarked in this repository yet.
 
 ## Observed environment and upstream evidence
 
@@ -28,7 +28,7 @@ pair. [Triton 3.8.0 compatibility](https://github.com/triton-lang/triton/blob/v3
 
 ## Representation choice
 
-Start with **two contiguous, one-dimensional `torch.float32` tensors** of length
+The source uses **two contiguous, one-dimensional `torch.float32` tensors** of length
 `N = 2**n`: one real array and one imaginary array. Together these represent
 complex64 amplitudes. Keep the CPU oracle in NumPy complex128. This is a choice
 for transparent indexing and arithmetic, not a performance conclusion.
@@ -52,7 +52,7 @@ float64, final dimension size two and stride one, and even outer strides.
 
 ## First kernel and index mapping
 
-Implement one generic 2-by-2 single-qubit matrix kernel. Host code supplies its
+The source implements one generic 2-by-2 single-qubit matrix kernel. Host code supplies its
 eight real coefficients; rotations are constructed on the host. No complex
 class, fusion system, or specialized gate family is needed to prove this slice.
 
@@ -78,6 +78,22 @@ element always corresponds to one CUDA thread. Its vector tutorial demonstrates
 the program/block/mask pattern.
 [Triton vector addition tutorial](https://triton-lang.org/main/getting-started/tutorials/01-vector-add.html).
 
+The initial implementation uses 256 pair elements per program, four warps, int64
+index arithmetic widened before multiplying the program index, and masked loads
+and stores. A 39-qubit cap protects the one-dimensional launch-grid bound; actual
+device memory is far more restrictive (39 qubits would require 4 TiB raw storage).
+The same storage is updated in place because pairs are disjoint and all four
+real input components are loaded before writes. An out-of-place buffer would add
+allocation/storage without resolving any cross-pair dependency for this operation.
+Real and imaginary tensors must have distinct underlying storage.
+
+At target zero, target-zero indices are even and target-one indices are odd: each
+load stream has stride two. At high targets, consecutive pair numbers traverse
+long contiguous runs in each half, with paired values separated by `2**target`.
+All arithmetic and coefficients are float32. The initial launch disables floating
+point fusion (`enable_fp_fusion=False`) to keep the baseline operation ordering
+explicit; this is not a performance optimization or a claim about fastest settings.
+
 The state occupies `8*N` bytes at this precision. A full gate logically reads
 and writes it once, totaling `16*N` bytes, excluding coefficients, conversions,
 and cache/transaction effects. The target bit changes spacing between paired
@@ -94,7 +110,7 @@ the raw kernel with independent dense NumPy arithmetic on exactly the same round
 inputs. Do not feed rounded inputs into the current public CPU oracle: its strict
 `1e-12` norm validation correctly rejects many float32-rounded states. For example,
 rounded H|0> has squared norm about `0.99999996577`. GPU result ownership will also
-need an explicit precision-aware boundary rather than wrapping float32 results in
+use the explicit `GPUResult` boundary rather than wrapping float32 results in
 the current strict CPU `StateVector` or silently renormalizing them.
 
 Cover basis states, random normalized complex states, several sizes, every target
@@ -106,6 +122,10 @@ Absolute tolerance alone can hide errors in small amplitudes of large states.
 Long-circuit tolerances need a separate depth/error study; never loosen a test
 just to make a failure disappear. Floating point operation ordering can cause
 CPU/GPU differences. [PyTorch numerical accuracy](https://docs.pytorch.org/docs/2.10/notes/numerical_accuracy.html).
+
+The validation CLI and pytest suite now encode these single-gate thresholds and
+prespecified depth budgets through 64 gates; see [GPU validation](gpu-validation.md)
+for exact formulas and rationale. They are still unverified on NVIDIA hardware.
 
 CPU use must require neither PyTorch nor Triton. Future GPU tests should skip
 with an explicit missing-hardware/dependency reason in CPU-only environments;

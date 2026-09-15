@@ -1,4 +1,53 @@
-# Initial CPU validation record
+# Validation records
+
+## Triton source and CPU benchmark follow-up
+
+Session: 2026-09-14 local time (artifact timestamps use UTC). Branch:
+`feat/triton-backend`, starting from `fe09a9c`. Local acceptance is complete;
+**Milestone 2 remote acceptance remains incomplete**.
+
+| Check | Result |
+| --- | --- |
+| `.venv/bin/python -m pytest -q` | 519 passed, 0 failed, 634 explicitly skipped, in 1.07 s |
+| Existing CPU cases | All original 376 pass; CPU source and existing CPU tests unchanged |
+| Added passing host cases | 29 capability decisions, 38 GPU interface boundaries, 27 CLI/error-budget checks, 49 benchmark checks |
+| Real GPU cases | 634 skipped: Darwin, CPU-only PyTorch, CUDA unavailable, Triton missing |
+| `.venv/bin/python -m quantaforge.validate_gpu --json` | UNAVAILABLE, exit 2, 0 device checks; environment metadata emitted |
+| Ruff lint / format | All checks passed; 30 files already formatted |
+| Package build | Source distribution and wheel built successfully without installing GPU dependencies |
+| Extracted source archive | 519 passed, 0 failed, 634 skipped in 1.31 s; benchmark/test helpers included |
+| Isolated wheel target | GPU source/validator present; dependencies marked optional; Mac validator exits 2 with metadata |
+| Bell / GHZ examples | Analytical assertions and seeded sampling passed |
+| CPU CLI smoke | 8 H/RX cases at 8/10 qubits, 24 raw timings, valid JSON and successful prechecks |
+| Recorded CPU sweep | 16 H/RX cases at 8/12/16/18 qubits, 496 timings; all 9 source hashes verified |
+
+The increased test count comes from host-side failure/precision/benchmark checks
+and a parameterized real-device matrix across gates, qubit counts, targets, seeds,
+analytical states, inverse rotations, circuits, raw storage contracts and streams.
+Host tests do not mock numerical GPU success. Skipped cases are not GPU validation.
+
+The saved [CPU artifact](../benchmarks/results/cpu-m4-pro-2026-09-14.json) records
+Apple M4 Pro, Python 3.12.11, NumPy 2.3.5, complex128, raw trials, NumPy/BLAS/thread
+configuration and source hashes. Example complete H-call timings: 8 qubits/target
+0 median 20,958 ns, p95 22,187.5 ns; 18 qubits/target 0 median 1,931,458 ns, p95
+2,529,562.5 ns. These are a single warmed sweep, not a speedup or kernel-only
+measurement. The methodology and metadata correction are recorded in
+[benchmarking.md](benchmarking.md).
+
+Review reproduced five capability-test failures caused by accepting only the
+string `1` for interpreter mode. Triton also recognizes other truthy spellings.
+Detection now matches those spellings and checks in-process overrides; all 29
+runtime tests pass. The raw wrapper also rejects a cached interpreted function.
+The validator now emits FAIL with metadata before re-raising compilation/launch
+exceptions, preserving debugging information rather than treating them as skips.
+
+Unverified: kernel compilation, numerical GPU agreement, CUDA stream behavior,
+GPU timings, hosted CI, and external-simulator comparisons. Error thresholds are
+prespecified engineering budgets, not hardware-calibrated tolerances. Follow
+[gpu-validation.md](gpu-validation.md) and capture all five remote acceptance
+conditions before marking Milestone 2 complete.
+
+## Initial CPU validation record (before this follow-up)
 
 Date: 2026-09-14. Milestones 0 and 1 accepted locally. Milestone 2 is not complete.
 

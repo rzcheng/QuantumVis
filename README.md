@@ -3,12 +3,25 @@
 QuantaForge is a state-vector quantum circuit simulator being built to investigate
 GPU numerical computing: mapping gates to parallel work, understanding memory
 access, validating floating-point results, and measuring performance honestly.
-The CPU reference is the first implementation. Custom Triton GPU kernels are the
-next milestone; there are no GPU results or speedup claims yet.
+The CPU reference is validated locally. An initial custom Triton single-qubit
+backend now has source and validation tools, but has **not executed on NVIDIA
+hardware**. There are no GPU correctness results or speedup claims yet.
 
 Milestones 0 and 1 are implemented and locally validated: **376 CPU tests pass**
 on Python 3.12.11 / NumPy 2.3.5. CPU CI is configured for Python 3.12–3.14;
 the hosted workflow has not yet run. See the [validation record](docs/validation.md).
+
+Implemented: the CPU engine and measurement API, optional GPU runtime detection,
+one generic Triton single-qubit kernel and simulator interface, deterministic GPU
+validation, and a reproducible CPU gate-call benchmark harness. Validated locally:
+CPU behavior, GPU host-side boundaries, missing-runtime reporting, packaging, and
+CPU benchmark prechecks. Awaiting NVIDIA hardware: Triton compilation/execution,
+analytical and differential GPU checks, the full GPU pytest suite, and GPU timings.
+**Milestone 2 remains incomplete.**
+
+The follow-up local suite reports **519 passed, 0 failed, 634 GPU cases skipped**.
+The added passing cases test host boundaries, validation reporting/error budgets,
+and benchmark correctness; they do not establish Triton execution.
 
 The current scope is pure-state simulation of X, Y, Z, H, S, T, RX, RY, RZ, CX
 (CNOT), and CZ, with probabilities and seeded computational-basis sampling.
@@ -27,6 +40,11 @@ python -m pip install -e .
 python examples/bell_state.py
 python examples/ghz_state.py
 ```
+
+For development without the pinned reference environment, use
+`python -m pip install -e '.[dev]'`. The GPU extra is separate and Linux-only;
+see the [NVIDIA validation guide](docs/gpu-validation.md). NumPy remains the only
+required runtime dependency. PyTorch/Triton are never imported by CPU execution.
 
 ```python
 from quantaforge import Circuit, CPUSimulator
@@ -73,9 +91,9 @@ to simulate arbitrary quantum computers cheaply.
 
 The gate definitions, circuit execution, state validation, and measurement wrapper
 are implemented here. NumPy supplies numerical storage, vectorized arithmetic, and
-random sampling. A future GPU backend will reuse the circuit description and use
-PyTorch for device storage and Triton for custom kernels, rather than delegating
-execution to an existing quantum simulator.
+random sampling. The initial GPU backend reuses the circuit description, uses
+PyTorch for device storage and transfers, and supplies its own Triton kernel for
+state updates. It does not delegate execution to another quantum simulator.
 
 Read the [architecture](docs/architecture.md), [mathematical conventions](docs/math.md),
 and [GPU complex-number representation decision](docs/gpu-representation.md).
@@ -105,22 +123,50 @@ runtime dependency or a substitute for analytical tests.
 
 The development host is an Apple M4 Pro running macOS. It has no NVIDIA CUDA device
 or driver and no Triton installation, so it cannot validate the intended GPU
-backend. No custom GPU kernel has been implemented or accepted on this host.
-The representation decision proposes separate contiguous `float32` real and
-imaginary arrays; it remains a baseline to verify on a compatible device.
+backend. Source exists for one generic in-place complex 2x2 kernel over separate
+contiguous `float32` real and imaginary arrays. All nine single-qubit gates use
+that kernel; CX/CZ explicitly raise `NotImplementedError` on the GPU backend.
 
-The next milestone is one generic single-qubit Triton kernel, an explicit runtime
-availability check, and CPU/GPU differential tests. Tests must skip clearly when
-CUDA/Triton is unavailable; requesting GPU execution must report the missing
-capability rather than silently run on the CPU.
+`from quantaforge.gpu import GPUSimulator, gpu_status` imports without loading
+optional frameworks. `gpu_status()` probes prerequisites and explains failures;
+`GPUSimulator().run(circuit)` explicitly requires them. There is no CPU fallback.
+Its `GPUResult` contains downloaded read-only complex64 amplitudes and probabilities
+without silently correcting norm drift; GPU sampling is not implemented yet.
+
+After installing on compatible Linux/NVIDIA hardware, run:
+
+```bash
+python -m quantaforge.validate_gpu
+python -m pytest -q -rs tests/test_gpu_correctness.py
+```
+
+The validator exits nonzero if unavailable or failing. GPU pytest tests skip only
+for missing prerequisites, with explicit reasons. Compilation and numerical
+failures on compatible hardware fail. A capability probe or skipped test suite is
+not GPU validation. Installation and failure diagnosis are in the
+[GPU validation guide](docs/gpu-validation.md).
 
 Later benchmarks will compare a vectorized NumPy baseline with straightforward
 and optimized GPU kernels. They must record hardware, software, precision, seeds,
 state size, and workload; separate compilation, transfers, kernel execution,
 gate-call latency, and whole-circuit runtime; warm up and synchronize GPU work;
-and retain repeated trials with median and p95 in JSON artifacts. No performance
-measurements or benchmark artifacts are claimed in this milestone. There is not
-yet evidence that this implementation beats any established simulator.
+and retain repeated trials with median and p95 in JSON artifacts. The current
+CPU harness already records those host-side fields and raw timing samples:
+
+```bash
+python -m benchmarks.benchmark_gates --qubits 8 12 16 18 \
+  --operations H RX --warmups 5 --repetitions 31 \
+  --output benchmarks/results/cpu-local.json
+```
+
+This measures complete one-gate `CPUSimulator.run()` latency, including validation,
+copies and result construction, after warmups. It excludes process startup and
+test/setup work. See [benchmark methodology](docs/benchmarking.md) and saved small
+CPU artifacts in `benchmarks/results/`. There is no evidence yet that this
+implementation beats an established simulator, and no CPU/GPU ratio is reported.
+
+The [recorded M4 Pro sweep](benchmarks/results/cpu-m4-pro-2026-09-14.json) retains
+16 cases and 496 raw trials, including source fingerprints and numerical prechecks.
 
 One optimization will be selected only after correctness and measurements identify
 a bottleneck. A static React/TypeScript demonstration follows meaningful simulator
@@ -131,7 +177,7 @@ recorded; GitHub Pages will not run the Python/Triton engine live.
 
 0. Repository foundation — implemented; local tooling passes, hosted CI pending.
 1. Correct CPU reference — accepted locally with 376 passing tests.
-2. One GPU kernel and differential correctness on compatible hardware.
+2. One GPU kernel — source and validation tooling implemented; NVIDIA acceptance pending.
 3. Required GPU gate coverage and randomized circuits.
 4. Reproducible benchmark harness and saved results.
 5. One measured optimization with before/after evidence.
@@ -139,3 +185,6 @@ recorded; GitHub Pages will not run the Python/Triton engine live.
 
 See the [initial implementation plan](docs/implementation-plan.md) for environment
 findings and acceptance boundaries, and [AGENTS.md](AGENTS.md) for engineering rules.
+The [follow-up plan](docs/triton-implementation-plan.md) separates local preparation
+from remote acceptance. [Technical understanding notes](docs/interview-notes.md)
+identify the concepts to work through before making portfolio claims.

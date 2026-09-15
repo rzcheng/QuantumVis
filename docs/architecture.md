@@ -1,8 +1,9 @@
 # Architecture
 
 QuantaForge separates circuit description, state ownership, and execution. The
-first backend is a NumPy CPU reference. GPU execution is a later implementation
-of the same gate semantics, not a dependency of the CPU package.
+first backend is a NumPy CPU reference. The initial Triton backend implements the
+same single-qubit semantics in source; its NVIDIA execution is not yet validated.
+It remains an optional dependency, separate from CPU use.
 
 ## Current data flow
 
@@ -76,17 +77,29 @@ valid target/control positions, with fixed seeds for reproducibility.
 
 ## GPU boundary and next slice
 
-The next implementation will use PyTorch for device allocation and Triton for one
-generic single-qubit kernel. The proposed representation is split contiguous real
-and imaginary `float32` arrays; see the [decision note](gpu-representation.md) for
-library support, alternatives, and reasons. There is no GPU backend yet and no
-unverified kernel scaffold in the CPU milestone.
+`GPUSimulator` uses PyTorch for device allocation/transfers and one generic Triton
+single-qubit kernel. Its storage is split contiguous real and imaginary `float32`
+arrays; see the [decision note](gpu-representation.md). The public input contract
+still uses strict normalized complex128 inputs. Each input component is copied and
+rounded to device float32 storage once, then gates execute sequentially in place.
+CX/CZ are rejected before runtime probing or allocation.
 
-Each future logical kernel element will own one disjoint amplitude pair. This follows
-directly from the math and avoids overlapping writes for a single gate. Device availability
-will be checked explicitly. CPU-only installations must remain usable without
-importing PyTorch or Triton. GPU tests will skip with a concrete reason if unavailable;
-an explicit request to run on the GPU will fail clearly instead of switching backend.
+`GPUResult` owns a downloaded read-only complex64 array. Unlike CPU `StateVector`,
+it permits finite norm drift and computes probabilities in float64 without
+rescaling. It has no sampling method in this slice. The existing strict CPU type
+is unchanged. Blocking downloads synchronize before the public call returns;
+low-level kernel calls are asynchronous. Public GPU run latency therefore includes
+uploads/downloads and validation as well as launches and execution.
+
+Each logical kernel element owns one disjoint amplitude pair. This follows directly
+from the math and avoids overlapping writes for a single gate. `gpu/runtime.py`
+probes installed frameworks, Linux, CUDA/NVIDIA, selected device and compute
+capability. `usable=True` means prerequisites are present, not that the kernel has
+compiled. Missing capability is reported explicitly; unexpected import/driver
+errors propagate. CPU and GPU interfaces import without PyTorch/Triton. GPU tests
+skip with a concrete reason if prerequisites are absent. Explicit GPU execution
+fails clearly instead of switching backend. The interpreter is not accepted as
+real NVIDIA validation.
 
 The first GPU acceptance requires randomized and analytical agreement with the CPU
 reference on a compatible device. Adding all GPU gates, measuring runtime, and
@@ -95,8 +108,8 @@ optimal before it is measured.
 
 ## Deferred systems
 
-Benchmarks will consume the public backend APIs and save metadata plus trial data
-as JSON. The static website will consume exported circuit and benchmark artifacts,
-not call Python. Neither has been implemented yet. There is no backend server,
+The CPU benchmark now consumes the existing public API and saves metadata plus raw
+trial data as JSON. GPU timings remain deferred until correctness passes. The
+future static website will consume exported artifacts, not call Python. There is no backend server,
 database, authentication system, cloud infrastructure, or browser GPU runtime in
 this first milestone.
