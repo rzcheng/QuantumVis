@@ -26,4 +26,5 @@ jobs:
       - run: python -m pytest
       - run: python examples/bell_state.py
       - run: python examples/ghz_state.py
+      - run: python -m benchmarks.benchmark_gates --qubits 8 --operations H --warmups 1 --repetitions 3 --output /tmp/quantaforge-cpu-smoke.json
       - run: python -m build --no-isolation
