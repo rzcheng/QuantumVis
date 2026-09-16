@@ -75,6 +75,12 @@ Analytical circuits and inverse operations provide checks that do not depend on 
 same implementation path. Randomized tests cover multiple register sizes and all
 valid target/control positions, with fixed seeds for reproducibility.
 
+The optional Qiskit verification suite translates operation names and arguments
+into Qiskit's circuit API and compares direct complex amplitudes. It never passes
+production gate matrices to the reference, reverses bit order, or removes global
+phase. Its dependencies and CI job are separate from CPU runtime installation.
+See [external verification](external-verification.md).
+
 ## GPU boundary and next slice
 
 `GPUSimulator` uses PyTorch for device allocation/transfers and one generic Triton

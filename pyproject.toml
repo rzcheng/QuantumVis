@@ -17,6 +17,7 @@ gpu = [
   "triton>=3.2,<4; platform_system == 'Linux'",
 ]
 dev = ["pytest>=9,<10", "ruff>=0.15,<1", "build>=1.4,<2"]
+verification = ["qiskit>=2,<3"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -26,6 +27,7 @@ testpaths = ["tests"]
 addopts = "-ra --strict-markers --strict-config"
 markers = [
   "gpu: requires an explicitly detected compatible GPU runtime",
+  "external: compares CPU semantics with the optional Qiskit reference",
 ]
 
 [tool.ruff]
