@@ -80,7 +80,8 @@ Follow [the three-stage runbook](first-nvidia-run.md) to save one device session
 Use a separate Linux x86_64/Python 3.12 environment. The development Mac has no
 Triton installation; neither interpreter execution nor compile-only execution
 has been performed locally. Hosted interpreter validation has now passed on
-Linux with Triton 3.8.0: [147 passed, zero skips](https://github.com/rzcheng/quantum-sim/actions/runs/35062312183).
+Linux with Triton 3.6.0 and 3.8.0:
+[147 passed, zero skips per version](https://github.com/rzcheng/quantum-sim/actions/runs/35063367779).
 No NVIDIA execution or compilation is implied. No emulator or alternate kernel is added.
 
 ```bash
@@ -223,6 +224,8 @@ provide the CUDA wheel index. A different driver/toolchain may require a differe
 official wheel; do not substitute an unverified combination silently.
 
 ```bash
+set -e
+unset TRITON_INTERPRET
 nvidia-smi
 git clone --branch feat/triton-backend https://github.com/rzcheng/quantum-sim.git
 cd quantum-sim

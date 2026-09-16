@@ -14,8 +14,8 @@ compiled or run on NVIDIA hardware yet**. There are no GPU performance claims.
   Controlled GPU gates and sampling are not implemented.
 - CPU/host tests: **797 passed, 0 failed** on the development Mac, including
   185 optional Qiskit comparisons.
-- Interpreter validation: **147 passed, zero skips** in hosted Linux CI with
-  Triton 3.8.0. All 147 remain skipped locally on the Mac; this is not GPU execution.
+- Interpreter validation: **147 passed, zero skips per version** in hosted Linux
+  CI with Triton 3.6.0 and 3.8.0. All 147 skip on the Mac; this is not GPU execution.
 - Compile-only validation: manual Linux probe prepared for SM 8.7, unexecuted.
   The public Triton CLI has a driver-dependent output path; no internal workaround.
 - Real NVIDIA validation: all 673 device cases skipped locally; still pending.

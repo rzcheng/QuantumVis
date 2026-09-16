@@ -16,6 +16,16 @@ unchanged. No NVIDIA computation or GPU benchmark ran during this preparation.
 | Ruff lint / format | Passed; 39 Python files formatted |
 | Build / pip check / examples | Wheel and source archive built; both environments passed pip check; Bell/GHZ assertions passed |
 | Hosted interpreter, starting revision `aeaedce` | **147 passed, 0 failed, 0 skipped**, Triton 3.8.0, Torch 2.10.0+cpu, Python 3.12.14 |
+| Hosted CPU matrix, implementation revision `1a9a20a` | Python 3.11/3.12/3.13/3.14: **612 passed, 0 failed, 1005 skipped each**; lint, format, examples, CPU smoke and builds passed |
+| Hosted Qiskit job, `1a9a20a` | **185 passed, 0 failed, 0 skipped** |
+| Hosted interpreter matrix, `1a9a20a` | Triton 3.6.0 and 3.8.0: **147 passed, 0 failed, 0 skipped each** |
+
+The [CPU matrix](https://github.com/rzcheng/quantum-sim/actions/runs/35063367767)
+and [interpreter matrix](https://github.com/rzcheng/quantum-sim/actions/runs/35063367779)
+both completed successfully. Logs and both interpreter JUnit artifacts were
+downloaded and inspected. The later documentation commit only records these
+results; production/test code is the tested implementation revision. Compile-only
+was skipped by its manual-job condition, and remains unexecuted.
 
 The [hosted interpreter run](https://github.com/rzcheng/quantum-sim/actions/runs/35062312183)
 executed actual production source with `TRITON_INTERPRET=1`; its JUnit artifact
