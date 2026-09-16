@@ -1,0 +1,105 @@
+name: Hardware-free Triton validation
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      compile_only:
+        description: Probe the public compile CLI; upstream driver access may fail
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  interpreter:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+      - run: python -m pip install triton==3.8.0
+      - run: python -m pip install --no-build-isolation -e .
+      - run: python -m pip check
+      - name: Interpreter validation, no device execution
+        env:
+          TRITON_INTERPRET: "1"
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+        run: python -m pytest -q tests/test_triton_interpreter.py --junitxml=validation/results/interpreter.xml
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: triton-interpreter-validation
+          path: validation/results/interpreter.xml
+          if-no-files-found: error
+
+  compile-only:
+    if: github.event_name == 'workflow_dispatch' && inputs.compile_only
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+      - run: python -m pip install triton==3.8.0 numpy==2.3.5 -e .
+      - name: Compile-only public CLI probe, no device execution
+        env:
+          TRITON_INTERPRET: "0"
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import platform
+          import subprocess
+          import sys
+          from importlib.metadata import version
+          from pathlib import Path
+
+          output = Path("validation/results/compile-only")
+          output.mkdir(parents=True, exist_ok=False)
+          source = Path("src/quantaforge/gpu/kernels/single_qubit.py")
+          target = "cuda:87:32"
+          command = [sys.executable, "-m", "triton.tools.compile", str(source),
+                     "--kernel-name", "_single_qubit_kernel", "--target", target,
+                     "--signature", "*fp32,*fp32,i32,fp32,fp32,fp32,fp32,fp32,fp32,fp32,fp32,0,256",
+                     "--grid", "1,1,1", "--num-warps", "4", "--out-path", str(output / "kernel")]
+          with (output / "stdout.txt").open("x") as stdout, (output / "stderr.txt").open("x") as stderr:
+              try:
+                  result = subprocess.run(command, stdout=stdout, stderr=stderr, timeout=600)
+                  exit_code = result.returncode
+              except subprocess.TimeoutExpired:
+                  stderr.write("compile-only CLI timed out after 600 seconds\n")
+                  exit_code = 124
+          report = {
+              "evidence_level": "compile-only",
+              "python_version": platform.python_version(),
+              "triton_version": version("triton"),
+              "target": target, "compute_capability": [8, 7],
+              "kernel_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+              "command": command, "exit_code": exit_code,
+              "status": "PASS" if exit_code == 0 else "FAIL",
+              "compilation_succeeded": True if exit_code == 0 else None,
+              "limitation": "public CLI may fail after compilation during driver-dependent output; no runtime check",
+              "options": "CLI defaults; production enable_fp_fusion=False is not exposed by this CLI",
+          }
+          (output / "summary.json").write_text(json.dumps(report, indent=2) + "\n")
+          print(json.dumps(report, indent=2))
+          print((output / "stderr.txt").read_text(), file=sys.stderr)
+          sys.exit(exit_code)
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: triton-compile-only-probe
+          path: validation/results/compile-only/
+          if-no-files-found: error

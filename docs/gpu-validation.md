@@ -5,6 +5,136 @@ compatible NVIDIA hardware**. The Apple development machine cannot establish
 kernel compilation, device execution, or numerical correctness. A clean local
 skip is evidence about capability detection only.
 
+## Evidence levels
+
+| Level | What it establishes | What it does not establish |
+| --- | --- | --- |
+| CPU reference correctness | NumPy results against analytical, dense, and optional Qiskit references | Triton execution |
+| Triton interpreter validation | Production kernel indexing/arithmetic under CPU interpretation | NVIDIA compilation, parallel execution, CUDA streams, or performance |
+| Triton compile-only validation | Compilation for the recorded explicit target, when the compiler succeeds | Launch success or numerical correctness |
+| Real NVIDIA device validation | Actual kernel results and runtime contracts on the recorded device/software | Performance advantage or all-device compatibility |
+| Performance benchmarking | Timings for stated hardware, precision, workload, and timing boundary | Correctness without separate checks |
+
+These are separate records. None of the first three can accept Milestone 2.
+
+## Hardware-free Linux checks
+
+Use a separate Linux x86_64/Python 3.12 environment. The development Mac has no
+Triton installation; neither interpreter execution nor compile-only execution
+has been performed locally. No emulator, container, or alternate kernel is added.
+
+```bash
+python3.12 -m venv .venv-interpreter
+source .venv-interpreter/bin/activate
+python -m pip install -r requirements-dev.txt
+python -m pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+python -m pip install triton==3.8.0
+python -m pip install --no-build-isolation -e .
+python -m pip check
+TRITON_INTERPRET=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q \
+  tests/test_triton_interpreter.py --junitxml=validation/results/interpreter.xml
+```
+
+The `interpreter` job in `.github/workflows/triton-validation.yml` runs this path.
+Its 147 cases use the actual `_single_qubit_kernel`, CPU PyTorch storage, and the
+existing coefficient conversion and NumPy oracle. They cover X/H/phase/rotation
+identities, two seeds across all nine gates, low/middle/high targets at 1/5/10
+qubits, masked small blocks, multiple programs, and 8/16-gate circuits. Existing
+amplitude, relative-L2, and norm budgets are reused unchanged. JUnit records the
+Python/Triton/PyTorch/NumPy versions, kernel hash, seed, and evidence level.
+
+The tests skip unless explicitly enabled. Once enabled, an unsupported platform,
+missing dependency, import error, or numerical failure fails the job. Run them in
+a fresh process: the public CUDA wrapper still rejects interpreted kernels and
+CPU tensors. The normal CPU suite and real-device runner retain their meanings.
+
+Triton's [documented interpreter](https://triton-lang.org/main/programming-guide/chapter-3/debugging.html)
+executes program instances sequentially on CPU. It cannot expose inter-program
+races, compiler transformations, or device scheduling failures.
+
+### Compile-only boundary
+
+The manual `compile-only` job invokes Triton's public AOT CLI for `cuda:87:32`
+(SM 8.7, Orin), target qubit 0 and block size 256. Once the workflow is on the
+default branch and this branch is pushed:
+
+```bash
+gh workflow run triton-validation.yml --ref feat/triton-backend -f compile_only=true
+```
+
+The underlying Linux command, after the environment setup above, is:
+
+```bash
+mkdir -p validation/results/compile-only
+TRITON_INTERPRET=0 python -m triton.tools.compile \
+  src/quantaforge/gpu/kernels/single_qubit.py \
+  --kernel-name _single_qubit_kernel --target cuda:87:32 \
+  --signature '*fp32,*fp32,i32,fp32,fp32,fp32,fp32,fp32,fp32,fp32,fp32,0,256' \
+  --grid '1,1,1' --num-warps 4 --out-path validation/results/compile-only/kernel
+```
+
+**This is a diagnostic probe, not an established working CPU-only compilation
+path.** In [Triton 3.8.0's CLI source](https://github.com/triton-lang/triton/blob/v3.8.0/python/triton/tools/compile.py),
+output generation accesses `triton.runtime.driver.active` even with an explicit
+target. The CLI also does not expose production's `enable_fp_fusion=False`
+option. These limitations stop this subtask: no driver patch, internal compiler
+API, or alternate kernel is introduced. The manual job may fail on a CPU runner;
+its failure is retained, never converted into a pass or skip. It is opt-in so a
+known upstream limitation does not block CPU development on every push.
+
+The job saves stdout/stderr and JSON with Python/Triton versions, target,
+capability, source hash, command, exit code, and status. `compilation_succeeded`
+is true only after CLI success; a failed CLI leaves it null because failure may
+occur after compilation but before output. Even success covers only that CLI
+specialization and its default options, not the production launch configuration.
+No compile-only result has been recorded yet. Do not spend another session
+working around this boundary before the first device run.
+
+## Jetson preparation and metadata
+
+The metadata fallback currently recognizes **Jetson Orin only** (AGX Orin, Orin
+NX, Orin Nano), with compute capability exactly 8.7. NVIDIA lists these models at
+[SM 8.7](https://developer.nvidia.com/cuda/gpus). Xavier and the original Nano
+fall below the existing 8.0 minimum; an unknown model is not assumed supported.
+This is metadata compatibility, not evidence of a working Jetson kernel.
+
+Do not install desktop CUDA wheels blindly on Jetson. Check the board, JetPack,
+Python ABI, and the [NVIDIA PyTorch installation guide](https://docs.nvidia.com/deeplearning/frameworks/install-pytorch-jetson-platform/index.html).
+QuantaForge requires Python 3.12+, which may not match the available JetPack wheel.
+The compatible CUDA PyTorch build and an importable Triton on Linux aarch64 must
+be established first. The CPU-only interpreter environment above cannot run the
+device suite. After installing the matching GPU stack, install this project with
+`python -m pip install -e '.[dev]'` to avoid replacing that stack via the GPU extra.
+Run `python -m pip check` and the preflight before making the trip if remote shell
+access is available:
+
+```bash
+cat /etc/nv_tegra_release
+cat /proc/device-tree/model
+python -c 'from quantaforge.gpu import gpu_status; print(gpu_status())'
+```
+
+If `nvidia-smi` runs successfully, its output remains the metadata source. If the
+executable is missing, the runner requires Linux aarch64, recognizable Orin and
+L4T release files, and complete CUDA device metadata from the real validator.
+It saves both platform file contents in `summary.json` along with PyTorch/Triton
+versions, CUDA build version, device name/index, and capability. The CUDA build
+version is explicitly **not** a queried driver or runtime version; L4T identifies
+the installed Jetson platform release. A failing or timed-out `nvidia-smi` is not
+hidden by this fallback. Missing/malformed platform data remains a failure.
+
+CUDA availability, a visible supported device, Triton import, 108 deterministic
+checks, and all 673 real-device pytest cases with zero skips are still required.
+For the first Jetson acceptance run in the prepared environment:
+
+```bash
+env -u TRITON_INTERPRET python scripts/validate_nvidia.py \
+  --output validation/results/jetson-first-run
+```
+
+Use a fresh output directory when retrying. Neither the Orin metadata fallback
+nor interpreter tests certify CUDA wheel/driver/toolchain compatibility.
+
 ## Prepare Linux/NVIDIA
 
 Use Linux, Python 3.12 (the first validation target; the package requires 3.12+),
@@ -58,7 +188,8 @@ Mac it exits 2 with `UNAVAILABLE` and does not launch the GPU pytest step.
 The directory contains `summary.json`, validator JSON in `validator.stdout`, the
 full pytest JUnit report in `gpu-tests.xml` when run, and separate stdout/stderr
 logs for every command, including compilation tracebacks. It also records
-`nvidia-smi`, package versions, Git revision/status when available, and SHA-256
+`nvidia-smi` (or the guarded Jetson metadata above), package versions, Git
+revision/status when available, and SHA-256
 hashes of simulator, validator, tests, scripts, and dependency configuration.
 Source archives without Git work because the source hashes still identify the
 code. Reports under `validation/results/` are ignored by Git; retain and review
@@ -105,7 +236,8 @@ timestamp, NumPy version, tolerance policy, each completed check's maximum
 amplitude error, relative L2 error, and squared-norm drift. Metadata includes
 GPU name/compute capability, device index, Python, PyTorch, Triton, and the CUDA
 version associated with PyTorch. Save `nvidia-smi` output separately to retain the
-actual driver version; PyTorch's CUDA version is not the driver version.
+actual driver version on desktop NVIDIA systems; use the recorded L4T/platform
+metadata on the supported Jetson path. PyTorch's CUDA version is not the driver version.
 
 The first command currently performs 108 deterministic checks: analytical states,
 all nine supported gates on seeded inputs, inverse rotations, circuits up to

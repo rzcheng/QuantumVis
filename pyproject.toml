@@ -27,6 +27,7 @@ testpaths = ["tests"]
 addopts = "-ra --strict-markers --strict-config"
 markers = [
   "gpu: requires an explicitly detected compatible GPU runtime",
+  "interpreter: optional Linux Triton interpreter validation, not GPU execution",
   "external: compares CPU semantics with the optional Qiskit reference",
 ]
 

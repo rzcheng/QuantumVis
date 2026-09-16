@@ -12,8 +12,13 @@ compiled or run on NVIDIA hardware yet**. There are no GPU performance claims.
 - CPU: X, Y, Z, H, S, T, RX, RY, RZ, CX/CNOT, CZ, probabilities, and seeded sampling.
 - GPU: one generic single-qubit kernel, runtime checks, and validation tools.
   Controlled GPU gates and sampling are not implemented.
-- Tests: **739 passed, 673 GPU cases skipped** on the development Mac, including
-  185 optional Qiskit comparisons. Hosted CI is configured but has not run.
+- CPU/host tests: **765 passed, 0 failed** on the development Mac, including
+  185 optional Qiskit comparisons.
+- Interpreter validation: 147 cases prepared using the production kernel;
+  all skipped locally. Separate Linux CI added; execution is still pending.
+- Compile-only validation: manual Linux probe prepared for SM 8.7, unexecuted.
+  The public Triton CLI has a driver-dependent output path; no internal workaround.
+- Real NVIDIA validation: all 673 device cases skipped locally; still pending.
 - Benchmarks: a saved CPU baseline with raw timings. GPU measurements come later.
 
 See [validation records](docs/validation.md) for environments and exact checks.
@@ -111,6 +116,10 @@ This runs the deterministic validator and full GPU tests, saving results,
 environment details, and source hashes in a new directory. It requires zero
 failed or skipped GPU cases. Missing hardware returns `UNAVAILABLE`; a compiler
 or numerical failure remains an error. There is no automatic CPU fallback.
+Identified Jetson Orin boards can use L4T/device-tree and CUDA metadata when
+`nvidia-smi` is absent. This has host-side tests, but has not run on a Jetson.
+The [guide](docs/gpu-validation.md) separates CPU correctness, interpreter,
+compile-only, device validation, and performance evidence, with exact commands.
 
 ## benchmarks
 
@@ -130,8 +139,8 @@ simulator has been measured. See [benchmark methodology](docs/benchmarking.md).
 
 ## next steps
 
-1. Add hardware-free Triton interpreter and compile checks on Linux.
-2. Validate the single-qubit backend on NVIDIA hardware.
+1. Run the prepared Linux interpreter job; retain the public compile probe's limitation.
+2. Validate the single-qubit backend on compatible NVIDIA hardware; this is the next acceptance milestone.
 3. Add controlled GPU gates, then measure the GPU baseline.
 4. Pick one optimization from profiling evidence.
 5. Build a static demo using clearly labeled recorded results.

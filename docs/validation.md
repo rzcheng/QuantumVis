@@ -1,5 +1,60 @@
 # Validation records
 
+## Hardware-free preparation and Jetson metadata, 2026-09-16
+
+Starting revision: `eaefc21`, branch `feat/triton-backend`. Production kernel,
+CPU/GPU simulator code, numerical budgets, real-device suites, and benchmark
+methodology are unchanged. No GPU dependencies were installed on this Mac.
+
+| Evidence level | Result this session |
+| --- | --- |
+| CPU reference correctness / host tooling | **765 passed, 0 failed, 820 skipped** in 2.37 s; includes 185 Qiskit comparisons |
+| Triton interpreter validation | **0 executed**; 147 cases collected and skipped; Linux CI prepared |
+| Triton compile-only validation | **0 executed**; manual explicit-SM-8.7 Linux CLI probe prepared; upstream limitation documented |
+| Real NVIDIA device validation | **0 executed**; 673 cases skipped; actual acceptance runner exited 2, UNAVAILABLE, without GPU pytest |
+| Performance benchmarking | Not run; existing saved CPU baseline is unchanged; no GPU timing or speedup claim |
+
+Environment: macOS 15.7 arm64, Apple M4 Pro, Python 3.12.11, NumPy 2.3.5,
+pytest 9.0.3, Ruff 0.15.7, build 1.4.0, CPU-only PyTorch 2.10.0, Qiskit 2.5.2.
+Triton and NVIDIA hardware are unavailable. Passing host tests do not count as
+interpreter or device validation. The 26 new passing cases test metadata policy
+and report aggregation only, bringing the acceptance-runner file to 59 tests.
+
+The original runner's missing-`nvidia-smi` rejection was reproduced against its
+previous source using synthetic passing child reports; no GPU computation was
+simulated. Its cause was unconditional acceptance of metadata only through
+`nvidia-smi` exit code zero. The new path records recognizable Orin/L4T files and
+complete real-validator CUDA metadata when that executable is absent. Host tests
+reject unknown models, unsupported capability, unavailable CUDA, incomplete
+metadata, driver errors/timeouts, failed validation, and skipped GPU cases.
+Actual Jetson execution remains unverified.
+
+Diff review caught an overly broad Orin label match: a synthetic unknown Orin
+board initially passed metadata identification. The strengthened regression
+failed, the matcher was restricted to AGX Orin / Orin NX / Orin Nano, and the
+full local suite was rerun. No hardware was involved in this policy check.
+
+Ruff lint passed; all **35 Python files** passed formatting. Source distribution
+and wheel builds succeeded. Workflow YAML and the embedded compile-probe Python
+syntax were checked locally; neither Linux job was executed in this session.
+The existing CPU workflow and optional dependency boundaries are unchanged.
+
+Local JUnit/build logs and the actual Mac UNAVAILABLE run are retained under
+ignored `validation/results/hardware-free-2026-09-16/`. No skipped check is
+recorded as a numerical success. See [the GPU guide](gpu-validation.md) for the
+separate commands and limits of each evidence level.
+
+The compile-only subtask stops at Triton 3.8.0's public CLI: its output path still
+accesses an active driver and does not expose the production fusion option.
+The opt-in CI probe records its actual outcome, including failure; no undocumented
+compiler API or driver patch is added. On CLI failure, compilation success is
+unknown rather than inferred from partial output. Do not build additional
+hardware-free infrastructure before the first NVIDIA run.
+
+Next acceptance milestone: run the unchanged 108-check validator and all 673
+device cases on compatible NVIDIA hardware, preserve their environment/logs, and
+resolve real failures without weakening tests. Milestone 2 is not complete.
+
 ## Independent reference and robustness review, 2026-09-15
 
 Starting revision: `3cc8293`, branch `feat/triton-backend`. CPU simulator source,
