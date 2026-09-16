@@ -1,5 +1,49 @@
 # Validation records
 
+## First-device preparation, 2026-09-16
+
+Starting revision: `aeaedce`. Added preflight, a three-stage device runbook, a
+restricted post-acceptance H timing smoke, and a platform/package audit. Production
+kernel arithmetic, CPU reference, device tests, and numerical tolerances are
+unchanged. No NVIDIA computation or GPU benchmark ran during this preparation.
+
+| Check | Result |
+| --- | --- |
+| macOS Python 3.12.11, with Qiskit | **797 passed, 0 failed, 820 skipped** |
+| Clean temporary Python 3.11.9 CPU environment | **612 passed, 0 failed, 1005 skipped** |
+| New host-only preflight / benchmark protocol tests | 32 passed; no simulated GPU numerical success |
+| Mac preflight with `--smoke --json` | BLOCKED, exit 2; kernel import not attempted, smoke NOT_RUN |
+| Ruff lint / format | Passed; 39 Python files formatted |
+| Build / pip check / examples | Wheel and source archive built; both environments passed pip check; Bell/GHZ assertions passed |
+| Hosted interpreter, starting revision `aeaedce` | **147 passed, 0 failed, 0 skipped**, Triton 3.8.0, Torch 2.10.0+cpu, Python 3.12.14 |
+
+The [hosted interpreter run](https://github.com/rzcheng/quantum-sim/actions/runs/35062312183)
+executed actual production source with `TRITON_INTERPRET=1`; its JUnit artifact
+was downloaded and inspected. The manual compile-only job was skipped, so no
+compilation result is claimed. An additional interpreter job now targets Triton
+3.6.0, matching the desktop Torch 2.10 dependency. The unchanged kernel hash in the
+artifact is `244a64f123384262a8bddb3e3ae0b070252415baddcbab3c49a2743846bcc3bc`.
+
+Python support is widened to 3.11+ after local suite verification; 3.11–3.14 are
+configured in CPU CI. Python 3.10 is not accepted: `datetime.UTC` and the pinned
+NumPy version require 3.11. The clean Python 3.11 environment lacks Qiskit, so its
+1005 skips are 185 external comparisons, 147 interpreter, and 673 device cases.
+The main Mac environment skips only the latter two groups. Skips are not validation.
+
+Preflight's default READY is an eligibility/import result; `--smoke` additionally
+requires the production X result. Metadata-only tests do not establish a working
+Jetson stack. Published Triton aarch64 wheels were confirmed through PyPI metadata,
+but Ryan's model/JetPack/Python ABI and compatible NVIDIA Torch stack remain unknown.
+The preflight reports CUDA build and queried runtime versions separately; a
+missing optional CUDA Python runtime-query binding is explicitly recorded.
+
+The timing smoke is prepared but unexecuted. It requires a passing, zero-skip
+acceptance report for unchanged source, records complete synchronized `run()`
+latency, and preserves raw trials and provenance. It adds no performance claim.
+Local logs/JUnit/CI downloads are under ignored
+`validation/results/device-prep-2026-09-16/`. The next device acceptance still
+requires all 108 standalone checks and 673 real-device pytest cases.
+
 ## Hardware-free preparation and Jetson metadata, 2026-09-16
 
 Starting revision: `eaefc21`, branch `feat/triton-backend`. Production kernel,

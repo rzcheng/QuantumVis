@@ -12,10 +12,10 @@ compiled or run on NVIDIA hardware yet**. There are no GPU performance claims.
 - CPU: X, Y, Z, H, S, T, RX, RY, RZ, CX/CNOT, CZ, probabilities, and seeded sampling.
 - GPU: one generic single-qubit kernel, runtime checks, and validation tools.
   Controlled GPU gates and sampling are not implemented.
-- CPU/host tests: **765 passed, 0 failed** on the development Mac, including
+- CPU/host tests: **797 passed, 0 failed** on the development Mac, including
   185 optional Qiskit comparisons.
-- Interpreter validation: 147 cases prepared using the production kernel;
-  all skipped locally. Separate Linux CI added; execution is still pending.
+- Interpreter validation: **147 passed, zero skips** in hosted Linux CI with
+  Triton 3.8.0. All 147 remain skipped locally on the Mac; this is not GPU execution.
 - Compile-only validation: manual Linux probe prepared for SM 8.7, unexecuted.
   The public Triton CLI has a driver-dependent output path; no internal workaround.
 - Real NVIDIA validation: all 673 device cases skipped locally; still pending.
@@ -25,7 +25,7 @@ See [validation records](docs/validation.md) for environments and exact checks.
 
 ## quick start
 
-From the checkout, with Python 3.12+:
+From the checkout, with Python 3.11+ (3.12 shown):
 
 ```bash
 python3.12 -m venv .venv
@@ -109,6 +109,7 @@ The initial target is Linux/NVIDIA with compute capability 8.0+. Follow the
 Once the environment is ready:
 
 ```bash
+python -m quantaforge.gpu_preflight --smoke
 python scripts/validate_nvidia.py --output validation/results/nvidia-first-run
 ```
 
@@ -120,6 +121,10 @@ Identified Jetson Orin boards can use L4T/device-tree and CUDA metadata when
 `nvidia-smi` is absent. This has host-side tests, but has not run on a Jetson.
 The [guide](docs/gpu-validation.md) separates CPU correctness, interpreter,
 compile-only, device validation, and performance evidence, with exact commands.
+Use the [first-device runbook](docs/first-nvidia-run.md) for precheck, correctness,
+then the small post-acceptance timing smoke. Orin's exact software stack remains
+unverified; the [compatibility table](docs/gpu-validation.md#compatibility-and-installation-audit)
+does not infer support from a model name or a published ARM wheel.
 
 ## benchmarks
 
@@ -139,7 +144,7 @@ simulator has been measured. See [benchmark methodology](docs/benchmarking.md).
 
 ## next steps
 
-1. Run the prepared Linux interpreter job; retain the public compile probe's limitation.
+1. Confirm the NVIDIA machine's package/driver compatibility with preflight.
 2. Validate the single-qubit backend on compatible NVIDIA hardware; this is the next acceptance milestone.
 3. Add controlled GPU gates, then measure the GPU baseline.
 4. Pick one optimization from profiling evidence.

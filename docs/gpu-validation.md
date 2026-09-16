@@ -17,11 +17,71 @@ skip is evidence about capability detection only.
 
 These are separate records. None of the first three can accept Milestone 2.
 
+## Compatibility and installation audit
+
+No platform has confirmed QuantaForge **device correctness** yet. The table
+distinguishes package/hardware eligibility from actual execution evidence.
+
+| Platform | Architecture | Expected status | Blocker / requirement |
+| --- | --- | --- | --- |
+| Desktop Linux + recent NVIDIA GPU | x86_64 | Expected, device-unverified | Python 3.11+, CUDA PyTorch, matching Triton, driver/toolchain, SM >= 8.0; pass preflight smoke |
+| Jetson AGX Orin | aarch64 | Conditional, unverified | SM 8.7 eligible; exact JetPack/Python/PyTorch/Triton/NumPy stack unresolved |
+| Jetson Orin NX | aarch64 | Conditional, unverified | Same software requirements; model label is insufficient |
+| Jetson Orin Nano | aarch64 | Conditional, unverified | Same requirements; this is not the original Nano |
+| Xavier-class Jetson | aarch64 | Unsupported by current backend | SM 7.2 is below the 8.0 minimum |
+| Original Jetson Nano | aarch64 | Unsupported by current backend | SM 5.3 is below the 8.0 minimum |
+| macOS Apple Silicon | arm64 | GPU unsupported; CPU confirmed | Linux/NVIDIA required; Mac CPU tests do not validate GPU execution |
+
+Hardware references: [current NVIDIA devices](https://developer.nvidia.com/cuda/gpus),
+[legacy devices](https://developer.nvidia.com/cuda/gpus/legacy), and
+[Triton requirements](https://github.com/triton-lang/triton#compatibility).
+
+Package audit on 2026-09-16: PyPI publishes CPython 3.11/3.12 Linux aarch64
+manylinux 2.27/2.28 wheels for [Triton 3.6.0](https://pypi.org/project/triton/3.6.0/#files)
+and [3.8.0](https://pypi.org/project/triton/3.8.0/#files). This establishes wheel
+availability, **not JetPack or Orin runtime compatibility**. PyTorch 2.10's Linux
+x86_64 distribution pins Triton 3.6.0; that dependency is architecture-qualified,
+so an aarch64 Torch install must not be assumed to install Triton. Generic ARM
+wheel availability also does not prove Jetson CUDA support.
+
+The source uses `datetime.UTC` (Python 3.11+); pinned NumPy 2.3.5 also needs 3.11+.
+Python 3.11 passed the complete locally available CPU/host suite before support
+was widened from 3.12. CI now covers 3.11–3.14. Python 3.10 remains unsupported:
+supporting common older JetPack Python environments would require code/pin changes
+and separate verification, not just lowering package metadata. No GPU dependencies
+are added to the base NumPy installation.
+
+## Preflight
+
+```bash
+python -m quantaforge.gpu_preflight
+python -m quantaforge.gpu_preflight --smoke --json
+```
+
+Default preflight checks runtime eligibility, architecture, dependency major/minor
+ranges, and production kernel import without launching. `--smoke` additionally
+executes X|0> through `GPUSimulator` and verifies the result with the existing
+numerical check. READY means plausible for acceptance, not accepted. Exit codes
+are 0 READY, 2 BLOCKED/unavailable, and 1 unexpected import/query/launch/numerical
+error, with the original traceback retained on stderr.
+
+Reports include OS/architecture, Python/PyTorch/Triton, CUDA availability,
+device index/name/capability, and available Jetson files. `cuda_build_version`
+comes from PyTorch. `cuda_runtime_version` uses the already-installed public
+[CUDA Python getLocalRuntimeVersion API](https://nvidia.github.io/cuda-python/cuda-bindings/12.9.0/module/runtime.html)
+when available; otherwise it is explicitly null with a reason. No package is
+installed for metadata, and neither value is presented as the NVIDIA driver
+version. The queried CUDA Python library need not be PyTorch's bundled runtime.
+
+Follow [the three-stage runbook](first-nvidia-run.md) to save one device session.
+
 ## Hardware-free Linux checks
 
 Use a separate Linux x86_64/Python 3.12 environment. The development Mac has no
 Triton installation; neither interpreter execution nor compile-only execution
-has been performed locally. No emulator, container, or alternate kernel is added.
+has been performed locally. Hosted interpreter validation has now passed on
+Linux with Triton 3.8.0: [147 passed, zero skips](https://github.com/rzcheng/quantum-sim/actions/runs/35062312183).
+No NVIDIA execution or compilation is implied. No emulator or alternate kernel is added.
 
 ```bash
 python3.12 -m venv .venv-interpreter
@@ -35,7 +95,8 @@ TRITON_INTERPRET=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q \
   tests/test_triton_interpreter.py --junitxml=validation/results/interpreter.xml
 ```
 
-The `interpreter` job in `.github/workflows/triton-validation.yml` runs this path.
+The `interpreter` job in `.github/workflows/triton-validation.yml` runs this path
+for Triton 3.6.0 (the desktop Torch pin) and 3.8.0.
 Its 147 cases use the actual `_single_qubit_kernel`, CPU PyTorch storage, and the
 existing coefficient conversion and NumPy oracle. They cover X/H/phase/rotation
 identities, two seeds across all nine gates, low/middle/high targets at 1/5/10
@@ -100,7 +161,7 @@ This is metadata compatibility, not evidence of a working Jetson kernel.
 
 Do not install desktop CUDA wheels blindly on Jetson. Check the board, JetPack,
 Python ABI, and the [NVIDIA PyTorch installation guide](https://docs.nvidia.com/deeplearning/frameworks/install-pytorch-jetson-platform/index.html).
-QuantaForge requires Python 3.12+, which may not match the available JetPack wheel.
+QuantaForge requires Python 3.11+, which may not match the available JetPack wheel.
 The compatible CUDA PyTorch build and an importable Triton on Linux aarch64 must
 be established first. The CPU-only interpreter environment above cannot run the
 device suite. After installing the matching GPU stack, install this project with
@@ -111,7 +172,7 @@ access is available:
 ```bash
 cat /etc/nv_tegra_release
 cat /proc/device-tree/model
-python -c 'from quantaforge.gpu import gpu_status; print(gpu_status())'
+python -m quantaforge.gpu_preflight --smoke --json
 ```
 
 If `nvidia-smi` runs successfully, its output remains the metadata source. If the
@@ -135,24 +196,44 @@ env -u TRITON_INTERPRET python scripts/validate_nvidia.py \
 Use a fresh output directory when retrying. Neither the Orin metadata fallback
 nor interpreter tests certify CUDA wheel/driver/toolchain compatibility.
 
+There is no established universal Orin installation command. First obtain the
+board/L4T version and match an NVIDIA wheel's Python ABI and JetPack release using
+the [NVIDIA compatibility table](https://docs.nvidia.com/deeplearning/frameworks/install-pytorch-jetson-platform-release-notes/pytorch-jetson-rel.html).
+Confirm NumPy 2 support, Torch major/minor >= 2.6 and < 3, and Triton >= 3.2 and
+< 4 in that environment. NVIDIA prerelease builds still need the matching
+platform stack; the preflight's version-range check is not a wheel certification.
+After that stack is established, use the checkout's `.[dev]` installation and
+the same preflight/runbook. Do not replace a vendor CUDA build with generic Torch
+to satisfy a resolver. No source-build workaround is attempted here. If a matching
+stack is unavailable, the fastest alternative is an existing x86_64 Linux
+workstation with an Ampere/Ada NVIDIA GPU and working CUDA PyTorch/Triton.
+
 ## Prepare Linux/NVIDIA
 
-Use Linux, Python 3.12 (the first validation target; the package requires 3.12+),
+Use Linux x86_64, Python 3.12 (the first device target; the package requires 3.11+),
 a working NVIDIA driver, and a GPU with compute capability at least 8.0. This is
 QuantaForge's conservative initial support boundary, not a claim that all earlier
 hardware is inherently incapable of Triton. Confirm the installed Triton release's
 [upstream compatibility requirements](https://github.com/triton-lang/triton#compatibility).
 
-From this repository checkout:
+For a machine with a driver compatible with the CUDA 12.6 PyTorch build, a C
+compiler, and matching Python development headers, use this explicit baseline.
+The [official PyTorch version instructions](https://pytorch.org/get-started/previous-versions/#v2100)
+provide the CUDA wheel index. A different driver/toolchain may require a different
+official wheel; do not substitute an unverified combination silently.
 
 ```bash
 nvidia-smi
+git clone --branch feat/triton-backend https://github.com/rzcheng/quantum-sim.git
+cd quantum-sim
 python3.12 -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e '.[gpu,dev]'
+python -m pip install -r requirements-dev.txt
+python -m pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cu126
+python -m pip install --no-build-isolation -e '.[gpu]'
 python -m pip check
-python -c 'from quantaforge.gpu import gpu_status; print(gpu_status())'
+python -m quantaforge.gpu_preflight --smoke
+python scripts/validate_nvidia.py --output validation/results/nvidia-first-run
 ```
 
 The optional Linux GPU extra declares `torch>=2.6,<3` and `triton>=3.2,<4`.
