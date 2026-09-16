@@ -1,5 +1,30 @@
 # Validation records
 
+## NVIDIA acceptance handoff, 2026-09-15
+
+Added `scripts/validate_nvidia.py` to collect complete remote acceptance evidence
+with one command, while retaining the existing quick validator. Simulator code,
+CPU/GPU numerical tests, tolerances, and benchmark methodology are unchanged.
+
+Reproduced the acceptance hazard on this Mac: the real GPU pytest file returned
+exit code 0 with all 634 tests skipped. The new runner checks the JUnit case
+outcomes, rejects zero-test/inconsistent reports, and requires both validation
+stages and driver/package capture to pass before reporting PASS. Source hashes
+must also be unchanged across execution. Existing output directories are refused.
+
+Local checks: 33 host-side evidence/command tests passed. A real invocation
+created `validation/results/mac-handoff-2026-09-15`, retained failure diagnostics
+and environment/source details, reported UNAVAILABLE, and exited 2 without
+launching GPU pytest. These records are locally ignored artifacts, not a GPU
+acceptance result. Actual NVIDIA execution is still required for Milestone 2.
+
+Final local checks: **552 passed, 0 failed, 634 explicitly skipped** in 1.20 s.
+Ruff lint passed and all 33 Python files satisfied formatting. Source distribution
+and wheel builds passed; the extracted source archive includes the new script,
+helper, and tests, and its script's `--help` command passed. The 33 additional
+passing tests exercise evidence collection, not device execution. CPU benchmarks
+were not rerun because neither the simulator nor timing methodology changed.
+
 ## Triton source and CPU benchmark follow-up
 
 Session: 2026-09-14 local time (artifact timestamps use UTC). Branch:

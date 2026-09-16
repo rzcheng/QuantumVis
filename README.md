@@ -19,9 +19,9 @@ CPU benchmark prechecks. Awaiting NVIDIA hardware: Triton compilation/execution,
 analytical and differential GPU checks, the full GPU pytest suite, and GPU timings.
 **Milestone 2 remains incomplete.**
 
-The follow-up local suite reports **519 passed, 0 failed, 634 GPU cases skipped**.
+The current local suite reports **552 passed, 0 failed, 634 GPU cases skipped**.
 The added passing cases test host boundaries, validation reporting/error budgets,
-and benchmark correctness; they do not establish Triton execution.
+acceptance evidence, and benchmark correctness; they do not establish Triton execution.
 
 The current scope is pure-state simulation of X, Y, Z, H, S, T, RX, RY, RZ, CX
 (CNOT), and CZ, with probabilities and seeded computational-basis sampling.
@@ -136,9 +136,14 @@ without silently correcting norm drift; GPU sampling is not implemented yet.
 After installing on compatible Linux/NVIDIA hardware, run:
 
 ```bash
-python -m quantaforge.validate_gpu
-python -m pytest -q -rs tests/test_gpu_correctness.py
+python scripts/validate_nvidia.py --output validation/results/nvidia-first-run
 ```
+
+This runs the validator and full GPU tests, captures driver/package/source evidence,
+and requires zero failed or skipped GPU cases before reporting PASS. It creates a
+new evidence directory for every attempt and exits nonzero if unavailable. The
+quick check remains `python -m quantaforge.validate_gpu`; the full suite is
+`python -m pytest -q -rs tests/test_gpu_correctness.py`.
 
 The validator exits nonzero if unavailable or failing. GPU pytest tests skip only
 for missing prerequisites, with explicit reasons. Compilation and numerical

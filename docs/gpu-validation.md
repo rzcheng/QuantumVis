@@ -42,7 +42,41 @@ interpreted functions. An interpreter run cannot satisfy device acceptance.
 
 ## Run acceptance
 
-The one-command first check is:
+From the checkout, capture the complete acceptance run with one command:
+
+```bash
+python scripts/validate_nvidia.py --output validation/results/nvidia-first-run
+```
+
+Use a new output directory for each attempt; existing evidence is never overwritten.
+This runs the deterministic validator first and, only after it passes, the full
+GPU pytest file. It requires nonempty passing validator output, positive pytest
+case counts with **zero failures/errors/skips**, driver/package metadata, and
+unchanged source hashes throughout the run. Otherwise it exits nonzero. On this
+Mac it exits 2 with `UNAVAILABLE` and does not launch the GPU pytest step.
+
+The directory contains `summary.json`, validator JSON in `validator.stdout`, the
+full pytest JUnit report in `gpu-tests.xml` when run, and separate stdout/stderr
+logs for every command, including compilation tracebacks. It also records
+`nvidia-smi`, package versions, Git revision/status when available, and SHA-256
+hashes of simulator, validator, tests, scripts, and dependency configuration.
+Source archives without Git work because the source hashes still identify the
+code. Reports under `validation/results/` are ignored by Git; retain and review
+them before committing a successful NVIDIA result.
+
+Both subprocesses execute this checkout's source. The runner clears inherited
+`PYTEST_ADDOPTS`/`PYTEST_PLUGINS`, disables third-party pytest plugin autoload, and
+overrides configured pytest `addopts` so an accidental selection option cannot
+reduce the intended full run. Set `CUDA_VISIBLE_DEVICES` before starting to select
+the same visible device for both commands. Each command has a 900-second timeout;
+use `--timeout SECONDS` for a slower compilation environment. Timeouts remain
+failures with retained logs, not skips or evidence of numerical correctness.
+
+Actual NVIDIA execution of this wrapper and both suites remains unverified.
+
+### Individual commands
+
+The quick deterministic check alone is:
 
 ```bash
 python -m quantaforge.validate_gpu
