@@ -163,12 +163,26 @@ complex128. This separates indexing/arithmetic errors from input rounding withou
 feeding a float32-rounded state into the strict CPU normalization validator.
 The raw check uses the rounded input's squared norm as its drift reference.
 
-The full suite covers every target at 1, 2, 5, 9, and 10 qubits. With the current
-256-pair launch block these include masked small blocks, one full block, and
-multiple full blocks. State sizes are powers of two, so a final partial block in
-a multi-block launch cannot occur with this block size. Results are downloaded
-with blocking CPU transfers before comparison; tests do not time asynchronous
-launch submission or make performance claims.
+The full suite covers every target at 1, 2, 5, 9, and 10 qubits. It also checks all
+nine gates at targets 0, 8, and 17 in 18-qubit states, plus two seeded 64-gate
+circuits at that size. An 18-qubit split state uses 2 MiB on the device and launches
+512 programs with the current 256-pair block; host references and temporary arrays
+add memory. This covers substantially more programs and higher target bits than
+the two-program 10-qubit cases without requiring a large-memory GPU.
+
+Raw-kernel tests additionally place contiguous state views at offsets 1 and 17
+inside separate sentinel-filled allocations. They check both numerical output
+and untouched prefix/suffix guards for masked small blocks and multi-block
+states. These checks can reveal out-of-view writes and mishandling of nonzero
+storage offsets; they are not a proof of arbitrary memory safety. State sizes are
+powers of two, so a final partial block in a multi-block launch cannot occur with
+this block size. Results are downloaded with blocking CPU transfers before
+comparison; tests do not time launch submission or make performance claims.
+
+There are now 673 real-device pytest cases. All remain skipped on the Apple host;
+the additional 39 cases have not executed on NVIDIA hardware. The quick standalone
+validator remains the same 108-check suite. Neither suite establishes correctness
+beyond its tested state sizes, depths, precision, and device/software versions.
 
 ## First failure points
 

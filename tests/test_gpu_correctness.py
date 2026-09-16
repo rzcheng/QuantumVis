@@ -17,6 +17,8 @@ from quantaforge.validate_gpu import (
     raw_unitary_check,
 )
 
+from .oracle import dense_operator
+
 pytestmark = pytest.mark.gpu
 POSITIONS = [(n, target) for n in (1, 2, 5, 9, 10) for target in range(n)]
 ANALYTICAL_CASES = list(analytical_cases())
@@ -184,3 +186,75 @@ def test_nondefault_cuda_stream_preserves_order(gpu_device, gpu_simulator):
         raw_unitary_check(5, 4, SEED + 2, device=gpu_device)
         actual = gpu_simulator.run(circuit, initial_state=initial).amplitudes
     check_output("nondefault-stream", actual, expected, depth=16)
+
+
+@pytest.mark.parametrize("name", GATE_NAMES)
+@pytest.mark.parametrize("target", (0, 8, 17))
+def test_large_grid_single_gate_matches_cpu(gpu_simulator, name, target):
+    # 262,144 amplitudes / 512 programs exercises much more than the original
+    # two-program n=10 boundary. Split device state occupies 2 MiB, not GiB.
+    initial = random_state(18, SEED + target)
+    angle = -1.137 if name.startswith("R") else None
+    circuit = Circuit(18).add(Gate(name, target, angle=angle))
+    actual = gpu_simulator.run(circuit, initial_state=initial).amplitudes
+    expected = CPUSimulator().run(circuit, initial_state=initial).amplitudes
+    check_output(f"large-{name}-target{target}", actual, expected)
+
+
+@pytest.mark.parametrize("seed_offset", (0, 101))
+def test_large_grid_mixed_targets_preserve_sequential_order(gpu_simulator, seed_offset):
+    initial = random_state(18, SEED + seed_offset)
+    circuit = Circuit(18)
+    # Fixed coverage of adjacent, block-scale and far-separated pairs, followed
+    # by seeded placements. Exactly the existing maximum validated depth of 64.
+    for target in (0, 8, 17):
+        circuit.h(target).ry(target, 0.371).rz(target, -1.137)
+    for gate in random_circuit(18, 55, SEED + seed_offset + 1).operations:
+        circuit.add(gate)
+    actual = gpu_simulator.run(circuit, initial_state=initial).amplitudes
+    expected = CPUSimulator().run(circuit, initial_state=initial).amplitudes
+    check_output("large-mixed-target-circuit", actual, expected, depth=64)
+
+
+@pytest.mark.parametrize(("num_qubits", "target"), ((1, 0), (5, 0), (5, 4), (10, 0), (10, 9)))
+@pytest.mark.parametrize("offset", (1, 17))
+def test_raw_offset_views_preserve_guard_regions(gpu_device, num_qubits, target, offset):
+    import torch
+
+    from quantaforge.gpu.kernels import BLOCK_SIZE
+    from quantaforge.gpu.kernels.single_qubit import apply_single_qubit
+
+    device = torch.device("cuda", gpu_device)
+    initial = random_state(num_qubits, SEED + target).astype(np.complex64)
+    # Guard storage is larger than one block, making unmasked stores observable
+    # for sub-block states. Separate allocations satisfy the split-layout contract.
+    count = initial.size
+    real_storage = torch.full(
+        (count + offset + 2 * BLOCK_SIZE,), 1234.5, dtype=torch.float32, device=device
+    )
+    imag_storage = torch.full_like(real_storage, -987.25)
+    real = real_storage[offset : offset + count]
+    imag = imag_storage[offset : offset + count]
+    assert real.is_contiguous() and real.storage_offset() == offset
+    real.copy_(torch.tensor(initial.real.copy(), device=device))
+    imag.copy_(torch.tensor(initial.imag.copy(), device=device))
+    # Y mixes both amplitude indices and imaginary components; its coefficients
+    # are exact in float32, so input rounding is the only reference conversion.
+    matrix = np.array([[0, -1j], [1j, 0]], dtype=np.complex64)
+    apply_single_qubit(real, imag, matrix, target)
+    downloaded_real = real_storage.cpu().numpy()
+    downloaded_imag = imag_storage.cpu().numpy()
+    for values, sentinel in ((downloaded_real, 1234.5), (downloaded_imag, -987.25)):
+        assert_array_equal(values[:offset], sentinel)
+        assert_array_equal(values[offset + count :], sentinel)
+    actual = (
+        downloaded_real[offset : offset + count] + 1j * downloaded_imag[offset : offset + count]
+    )
+    rounded = initial.astype(np.complex128)
+    expected = dense_operator(num_qubits, "Y", target) @ rounded
+    check_output(
+        "offset-view-Y",
+        actual,
+        expected,
+        initial_squared_norm=float(np.vdot(rounded, rounded).real),
+    )
