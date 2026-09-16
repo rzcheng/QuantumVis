@@ -59,7 +59,7 @@ def test_random_circuit_matches_independent_dense_oracle(num_qubits, seed):
     expected = initial.copy()
     circuit = Circuit(num_qubits)
     names = ("X", "Y", "Z", "H", "S", "T", "RX", "RY", "RZ", "CX", "CZ")
-    # Include each gate at least once; vary the remaining order and placements.
+    # include each gate at least once; vary the remaining order and placements.
     sequence = list(names) + list(rng.choice(names, size=49))
     rng.shuffle(sequence)
     for name in sequence:

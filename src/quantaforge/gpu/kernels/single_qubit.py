@@ -1,8 +1,4 @@
-"""One generic complex 2x2 Triton kernel; requires the optional GPU runtime.
-
-No kernel execution has been validated on the macOS development host. Hardware
-acceptance is the analytical and differential suite on supported NVIDIA GPUs.
-"""
+"""in-place complex 2x2 kernel; nvidia validation is still pending."""
 
 import torch
 import triton
@@ -29,17 +25,15 @@ def _single_qubit_kernel(
     TARGET: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
-    # Widen BEFORE multiplication so pair indices beyond 2**31 remain valid.
+    # widen before multiplication so pair indices beyond 2**31 remain valid.
     pair = tl.program_id(0).to(tl.int64) * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
     valid = pair < num_pairs
-    # Insert a zero at TARGET into the compact pair number. Inverting this
-    # insertion recovers pair, so every target-zero index has exactly one owner.
+    # insert a zero target bit to give each pair exactly one owner.
     low_mask: tl.constexpr = (1 << TARGET) - 1
     i0 = ((pair >> TARGET) << (TARGET + 1)) | (pair & low_mask)
     i1 = i0 | (1 << TARGET)
 
-    # Each logical element loads both originals before either output is stored.
-    # Ownership is per pair, not a promise about one CUDA thread per element.
+    # load both original amplitudes before writing either output.
     a0r = tl.load(real_ptr + i0, mask=valid, other=0)
     a0i = tl.load(imag_ptr + i0, mask=valid, other=0)
     a1r = tl.load(real_ptr + i1, mask=valid, other=0)
@@ -59,9 +53,8 @@ def _single_qubit_kernel(
 def apply_single_qubit(
     real: torch.Tensor, imag: torch.Tensor, matrix: ArrayLike, target: int
 ) -> None:
-    """Validate split storage and enqueue one in-place generic matrix operation."""
-    # The decorator selects its wrapper at import time. A notebook can retain an
-    # interpreted function after disabling interpreter mode; never execute it.
+    """validate split storage and enqueue one in-place generic matrix operation."""
+    # notebooks can retain an interpreted wrapper after disabling interpreter mode.
     if not isinstance(_single_qubit_kernel, triton.JITFunction):
         raise RuntimeError(
             "the kernel was imported in Triton interpreter mode; "
@@ -91,8 +84,7 @@ def apply_single_qubit(
     coefficients = _matrix_coefficients(matrix)
     num_pairs = real.numel() // 2
     grid = (triton.cdiv(num_pairs, BLOCK_SIZE),)
-    # Use this device's current stream even when another CUDA device is selected
-    # outside the call. Compilation/launch errors deliberately propagate.
+    # use the tensors' device and its current stream.
     with torch.cuda.device(real.device):
         _single_qubit_kernel[grid](
             real,

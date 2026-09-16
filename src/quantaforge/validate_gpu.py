@@ -1,4 +1,4 @@
-"""Deterministic real-CUDA validation; this module does not depend on pytest."""
+"""deterministic real-cuda validation; this module does not depend on pytest."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ MAX_VALIDATED_DEPTH = 64
 
 
 class ValidationFailure(AssertionError):
-    """A numerical/output contract failure, distinct from runtime/compiler errors."""
+    """a numerical/output contract failure, distinct from runtime/compiler errors."""
 
 
 @dataclass(frozen=True)
@@ -37,7 +37,7 @@ class CheckResult:
 
 
 def error_limits(depth: int) -> tuple[float, float, float]:
-    """Prespecified amplitude-atol, relative-L2 and squared-norm drift limits."""
+    """prespecified amplitude-atol, relative-l2 and squared-norm drift limits."""
     if isinstance(depth, bool) or not isinstance(depth, int) or not 0 <= depth <= 64:
         raise ValueError("validation depth must be an integer between 0 and 64")
     additional_gates = max(0, depth - 1)
@@ -54,10 +54,9 @@ def check_output(
     depth: int = 1,
     initial_squared_norm: float = 1.0,
 ) -> CheckResult:
-    """Check amplitudes, relative L2 error and norm without renormalizing either input.
+    """check amplitudes, relative l2 error, and norm in double precision.
 
-    Accumulate diagnostics in complex128/float64 so the checker itself does not
-    add float32 reduction error. Tolerances remain unverified on NVIDIA hardware.
+    neither input is renormalized. gpu tolerances still need hardware validation.
     """
     actual = np.asarray(actual, dtype=np.complex128)
     expected = np.asarray(expected, dtype=np.complex128)
@@ -108,7 +107,7 @@ def random_circuit(num_qubits: int, depth: int, seed: int) -> Circuit:
 
 
 def analytical_cases() -> Iterator[tuple[str, Circuit, NDArray, NDArray]]:
-    """Expected states come directly from gate identities, not production matrices."""
+    """expected states come directly from gate identities, not production matrices."""
     cases = (
         ("X", [1, 0], [0, 1]),
         ("Y", [1, 0], [0, 1j]),
@@ -143,15 +142,14 @@ def analytical_cases() -> Iterator[tuple[str, Circuit, NDArray, NDArray]]:
 
 
 def raw_unitary_check(num_qubits: int, target: int, seed: int, device=None) -> CheckResult:
-    """Execute the actual kernel against an independent small dense rounded oracle."""
+    """execute the actual kernel against an independent small dense rounded oracle."""
     import torch
 
     from quantaforge.gpu.kernels.single_qubit import apply_single_qubit
 
     rng = np.random.default_rng(seed)
     matrix, _ = np.linalg.qr(rng.normal(size=(2, 2)) + 1j * rng.normal(size=(2, 2)))
-    # Both reference operands are rounded exactly as the GPU operands are. The
-    # rounded state is intentionally NOT passed into the strict CPU StateVector.
+    # compare equally rounded operands without the strict cpu norm check.
     matrix = matrix.astype(np.complex64)
     state = random_state(num_qubits, seed + 1).astype(np.complex64)
     dense = np.ones((1, 1), dtype=np.complex128)
@@ -162,7 +160,7 @@ def raw_unitary_check(num_qubits: int, target: int, seed: int, device=None) -> C
     real = torch.tensor(state.real.copy(), dtype=torch.float32, device=cuda_device)
     imag = torch.tensor(state.imag.copy(), dtype=torch.float32, device=cuda_device)
     apply_single_qubit(real, imag, matrix, target)
-    # Blocking CPU transfers synchronize before the reference comparison.
+    # blocking cpu transfers synchronize before the reference comparison.
     actual = real.cpu().numpy() + 1j * imag.cpu().numpy()
     rounded = state.astype(np.complex128)
     return check_output(
@@ -174,7 +172,7 @@ def raw_unitary_check(num_qubits: int, target: int, seed: int, device=None) -> C
 
 
 def run_checks(device=None) -> Iterator[CheckResult]:
-    """Yield completed checks; no simulated interpreter or CPU fallback is used."""
+    """yield completed checks; no simulated interpreter or cpu fallback is used."""
     from quantaforge.gpu import GPUSimulator
 
     simulator = GPUSimulator(device=device)
@@ -268,8 +266,7 @@ def main(argv: list[str] | None = None) -> int:
             report["failure"] = str(error)
             exit_code = 1
         except Exception as error:
-            # Report environment and completed checks, then preserve the original
-            # traceback. Configuration/compilation errors must never become skips.
+            # save diagnostics and keep the traceback; compiler failures are not skips.
             report["status"] = "FAIL"
             report["failure"] = f"{type(error).__name__}: {error}"
             _emit_report(report, json_output=args.json)

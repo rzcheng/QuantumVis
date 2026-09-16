@@ -1,4 +1,4 @@
-"""QuantaForge: circuit descriptions and a NumPy state-vector reference."""
+"""quantaforge: circuit descriptions and a numpy state-vector reference."""
 
 from quantaforge.circuit import Circuit
 from quantaforge.cpu.simulator import CPUSimulator

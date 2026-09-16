@@ -1,4 +1,4 @@
-"""Small dense test oracles, deliberately independent of production gate code."""
+"""small dense test oracles, deliberately independent of production gate code."""
 
 import numpy as np
 from numpy.typing import NDArray
@@ -13,7 +13,7 @@ def random_state(num_qubits: int, seed: int) -> NDArray[np.complex128]:
 
 
 def local_matrix(name: str, angle: float | None = None) -> NDArray[np.complex128]:
-    """Build rotations from their Pauli generator, unlike closed-form kernels."""
+    """build rotations from their pauli generator, unlike closed-form kernels."""
     x = np.array([[0, 1], [1, 0]], dtype=np.complex128)
     y = np.array([[0, -1j], [1j, 0]], dtype=np.complex128)
     z = np.diag(np.array([1, -1], dtype=np.complex128))
@@ -40,7 +40,7 @@ def dense_operator(
     control: int | None = None,
     angle: float | None = None,
 ) -> NDArray[np.complex128]:
-    """Use Kronecker products or basis-wise construction, never pair indexing."""
+    """use kronecker products or basis-wise construction, never pair indexing."""
     if name in {"CX", "CNOT", "CZ"}:
         assert control is not None
         matrix = np.zeros((2**num_qubits, 2**num_qubits), dtype=np.complex128)

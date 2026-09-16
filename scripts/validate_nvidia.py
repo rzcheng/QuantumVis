@@ -1,4 +1,4 @@
-"""Run both real-GPU suites and preserve a complete, non-overwriting evidence directory."""
+"""run both real-gpu suites and preserve a complete, non-overwriting evidence directory."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ def source_hashes(root: Path) -> dict[str, str]:
 
 
 def junit_counts(path: Path) -> dict[str, int]:
-    """Count actual testcase elements and reject an incomplete/malformed report."""
+    """count actual testcase elements and reject an incomplete/malformed report."""
     root = ET.parse(path).getroot()
     cases = list(root.iter("testcase"))
     suites = list(root.iter("testsuite"))
@@ -47,7 +47,7 @@ def junit_counts(path: Path) -> dict[str, int]:
 
 
 def validator_passed(report: dict, exit_code: int | None) -> bool:
-    """An exit code alone, or a zero-check PASS, is insufficient evidence."""
+    """an exit code alone, or a zero-check pass, is insufficient evidence."""
     checks = report.get("checks")
     return (
         exit_code == 0
@@ -62,7 +62,7 @@ def validator_passed(report: dict, exit_code: int | None) -> bool:
 def run_command(
     name: str, command: list[str], output: Path, env: dict[str, str], timeout: int
 ) -> dict:
-    """Keep full child stdout/stderr, including failed compilation tracebacks."""
+    """keep full child stdout/stderr, including failed compilation tracebacks."""
     record = {"command": command, "stdout": f"{name}.stdout", "stderr": f"{name}.stderr"}
     print(f"Running {name}...", flush=True)
     with (output / record["stdout"]).open("x") as stdout:
@@ -97,8 +97,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(f"output already exists: {output}; choose a new directory")
 
     env = os.environ.copy()
-    # Ensure the recorded source is what both subprocesses execute. Disallow
-    # inherited pytest selection/plugin options that could silently shrink a run.
+    # run this checkout and prevent inherited pytest options from shrinking the suite.
     env["PYTHONPATH"] = str(ROOT / "src")
     env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
     for name in ("PYTEST_ADDOPTS", "PYTEST_PLUGINS"):
@@ -128,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
     save()
     exit_code = 1
     try:
-        # Git is useful provenance but a source archive can be validated without it.
+        # git is useful provenance but a source archive can be validated without it.
         run("git-revision", ["git", "rev-parse", "HEAD"])
         run("git-status", ["git", "status", "--porcelain"])
         driver = run("nvidia-smi", ["nvidia-smi"])

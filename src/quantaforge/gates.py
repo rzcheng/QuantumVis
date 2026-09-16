@@ -1,4 +1,4 @@
-"""Validated gate descriptions and their small single-qubit matrices."""
+"""validated gate descriptions and their small single-qubit matrices."""
 
 from dataclasses import dataclass, field
 from numbers import Real
@@ -15,9 +15,9 @@ ROTATION_GATES = frozenset({"RX", "RY", "RZ"})
 
 @dataclass(frozen=True, slots=True)
 class Gate:
-    """An operation on named qubits; angles are radians.
+    """an operation on named qubits; angles are radians.
 
-    Qubit bounds are validated when an operation is added to a circuit.
+    qubit bounds are validated when an operation is added to a circuit.
     """
 
     name: str
@@ -55,7 +55,7 @@ class Gate:
 
 
 def single_qubit_matrix(gate: Gate) -> NDArray[np.complex128]:
-    """Return the 2x2 unitary; controlled operations have no 2x2 matrix here."""
+    """return the 2x2 unitary; controlled operations have no 2x2 matrix here."""
     if not isinstance(gate, Gate):
         raise TypeError("gate must be a Gate")
     name = gate.name
@@ -73,7 +73,7 @@ def single_qubit_matrix(gate: Gate) -> NDArray[np.complex128]:
         case "T":
             values = [[1, 0], [0, np.exp(1j * np.pi / 4)]]
         case "RX" | "RY" | "RZ":
-            # Gate validation guarantees the angle exists and is finite.
+            # gate validation guarantees the angle exists and is finite.
             half_angle = gate.angle / 2
             c, s = np.cos(half_angle), np.sin(half_angle)
             if name == "RX":

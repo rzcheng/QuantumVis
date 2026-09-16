@@ -1,1 +1,1 @@
-"""Reproducible, repository-local benchmark entry points."""
+"""reproducible, repository-local benchmark entry points."""

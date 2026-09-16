@@ -1,4 +1,4 @@
-# Pinned baseline used by CPU CI; NumPy is also the sole runtime dependency.
+# pinned cpu development environment
 numpy==2.3.5
 pytest==9.0.3
 ruff==0.15.7

@@ -1,4 +1,4 @@
-"""Explicit optional NVIDIA/Triton runtime detection, without kernel execution."""
+"""explicit optional nvidia/triton runtime detection, without kernel execution."""
 
 import os
 import platform
@@ -27,15 +27,13 @@ class GPUStatus:
 
 
 class GPUUnavailableError(RuntimeError):
-    """An explicitly requested GPU backend cannot run in this environment."""
+    """an explicitly requested gpu backend cannot run in this environment."""
 
 
 def gpu_status(device: int | None = None) -> GPUStatus:
-    """Probe prerequisites; a usable status does not establish kernel correctness.
+    """probe prerequisites, not kernel correctness.
 
-    Missing top-level packages are ordinary capability results. Broken imports,
-    driver queries, or invalid explicit device indices raise their original errors.
-    No failures are caught and converted into a misleading missing-GPU result.
+    missing packages return a status; broken imports and driver errors propagate.
     """
     if device is not None:
         device = integer(device, "device")
@@ -52,7 +50,7 @@ def gpu_status(device: int | None = None) -> GPUStatus:
     reasons = []
     if system != "Linux":
         reasons.append(f"Linux/NVIDIA required; host platform is {system}")
-    # Match Triton's case-insensitive boolean environment parser, not just '1'.
+    # match triton's case-insensitive boolean environment parser, not just '1'.
     if os.environ.get("TRITON_INTERPRET", "").lower() in {"1", "y", "on", "yes", "true"}:
         reasons.append("TRITON_INTERPRET enables CPU interpretation, not NVIDIA execution")
     if not has_torch:
@@ -79,10 +77,10 @@ def gpu_status(device: int | None = None) -> GPUStatus:
     if not has_triton:
         reasons.append("Triton is not installed")
     else:
-        # Import errors here must remain visible, including broken binary dependencies.
+        # import errors here must remain visible, including broken binary dependencies.
         triton = import_module("triton")
         details["triton_version"] = str(triton.__version__)
-        # Newer Triton also permits in-process overrides, e.g. in a notebook.
+        # newer triton also permits in-process overrides, e.g. in a notebook.
         knobs = getattr(triton, "knobs", None)
         runtime_knobs = getattr(knobs, "runtime", None)
         if getattr(runtime_knobs, "interpret", False):

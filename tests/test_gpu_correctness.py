@@ -1,4 +1,4 @@
-"""These checks require actual NVIDIA execution; missing capability is an explicit skip."""
+"""these checks require actual nvidia execution; missing capability is an explicit skip."""
 
 import numpy as np
 import pytest
@@ -29,7 +29,7 @@ def gpu_device():
     status = gpu_status()
     if not status.usable:
         pytest.skip(status.reason)
-    # Compiler, imports, allocation and execution errors after this point fail.
+    # compiler, imports, allocation and execution errors after this point fail.
     return status.device_index
 
 
@@ -56,8 +56,7 @@ def test_random_single_gate_matches_cpu(gpu_simulator, name, num_qubits, target,
     assert actual.num_qubits == num_qubits
     assert not actual.amplitudes.flags.writeable
     assert_array_equal(state, original)
-    # The result computes probabilities from its actual rounded amplitudes, with
-    # no CPU StateVector normalization gate or concealed renormalization.
+    # probabilities must preserve the rounded result's norm drift.
     exact_probabilities = np.abs(actual.amplitudes.astype(np.complex128)) ** 2
     assert_allclose(actual.probabilities(), exact_probabilities, atol=1e-15, rtol=1e-14)
 
@@ -191,8 +190,7 @@ def test_nondefault_cuda_stream_preserves_order(gpu_device, gpu_simulator):
 @pytest.mark.parametrize("name", GATE_NAMES)
 @pytest.mark.parametrize("target", (0, 8, 17))
 def test_large_grid_single_gate_matches_cpu(gpu_simulator, name, target):
-    # 262,144 amplitudes / 512 programs exercises much more than the original
-    # two-program n=10 boundary. Split device state occupies 2 MiB, not GiB.
+    # 512 programs with 2 MiB of split device storage.
     initial = random_state(18, SEED + target)
     angle = -1.137 if name.startswith("R") else None
     circuit = Circuit(18).add(Gate(name, target, angle=angle))
@@ -205,8 +203,7 @@ def test_large_grid_single_gate_matches_cpu(gpu_simulator, name, target):
 def test_large_grid_mixed_targets_preserve_sequential_order(gpu_simulator, seed_offset):
     initial = random_state(18, SEED + seed_offset)
     circuit = Circuit(18)
-    # Fixed coverage of adjacent, block-scale and far-separated pairs, followed
-    # by seeded placements. Exactly the existing maximum validated depth of 64.
+    # cover low, middle, and high targets within the 64-gate error budget.
     for target in (0, 8, 17):
         circuit.h(target).ry(target, 0.371).rz(target, -1.137)
     for gate in random_circuit(18, 55, SEED + seed_offset + 1).operations:
@@ -226,8 +223,7 @@ def test_raw_offset_views_preserve_guard_regions(gpu_device, num_qubits, target,
 
     device = torch.device("cuda", gpu_device)
     initial = random_state(num_qubits, SEED + target).astype(np.complex64)
-    # Guard storage is larger than one block, making unmasked stores observable
-    # for sub-block states. Separate allocations satisfy the split-layout contract.
+    # guards catch unmasked writes past small states.
     count = initial.size
     real_storage = torch.full(
         (count + offset + 2 * BLOCK_SIZE,), 1234.5, dtype=torch.float32, device=device
@@ -238,8 +234,7 @@ def test_raw_offset_views_preserve_guard_regions(gpu_device, num_qubits, target,
     assert real.is_contiguous() and real.storage_offset() == offset
     real.copy_(torch.tensor(initial.real.copy(), device=device))
     imag.copy_(torch.tensor(initial.imag.copy(), device=device))
-    # Y mixes both amplitude indices and imaginary components; its coefficients
-    # are exact in float32, so input rounding is the only reference conversion.
+    # y tests complex arithmetic with coefficients that are exact in float32.
     matrix = np.array([[0, -1j], [1j, 0]], dtype=np.complex64)
     apply_single_qubit(real, imag, matrix, target)
     downloaded_real = real_storage.cpu().numpy()

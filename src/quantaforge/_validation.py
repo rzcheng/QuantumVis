@@ -1,4 +1,4 @@
-"""Small shared validators; no backend or gate dependencies."""
+"""small shared validators; no backend or gate dependencies."""
 
 from numbers import Integral
 

@@ -1,4 +1,4 @@
-"""Prepare a four-qubit GHZ state and verify its amplitudes."""
+"""prepare a four-qubit ghz state and verify its amplitudes."""
 
 import numpy as np
 

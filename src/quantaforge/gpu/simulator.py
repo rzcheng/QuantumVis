@@ -1,4 +1,4 @@
-"""Single-qubit GPU execution with strict CPU inputs and visible float32 drift."""
+"""single-qubit gpu execution with strict cpu inputs and visible float32 drift."""
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -13,12 +13,7 @@ from quantaforge.state import StateVector
 
 
 class GPUResult:
-    """Owned read-only complex64 download, without normalization or rescaling.
-
-    Unlike the strict CPU StateVector, this result intentionally allows norm
-    drift. Tests must inspect that drift alongside amplitude and relative errors.
-    It supports probabilities, but has no measurement-sampling API in this slice.
-    """
+    """read-only complex64 result; preserves norm drift and supports probabilities."""
 
     def __init__(self, amplitudes: ArrayLike) -> None:
         values = np.asarray(amplitudes)
@@ -37,22 +32,20 @@ class GPUResult:
 
     @property
     def amplitudes(self) -> NDArray[np.complex64]:
-        """Read-only view; .copy() returns independently mutable storage."""
+        """read-only view; .copy() returns independently mutable storage."""
         return self._amplitudes.view()
 
     def probabilities(self) -> NDArray[np.float64]:
-        """Compute squared magnitudes in float64, preserving total norm drift."""
+        """compute squared magnitudes in float64, preserving total norm drift."""
         real = self._amplitudes.real.astype(np.float64)
         imag = self._amplitudes.imag.astype(np.float64)
         return real * real + imag * imag
 
 
 class GPUSimulator:
-    """Execute supported single-qubit gates; CUDA/Triton imports are lazy.
+    """single-qubit backend with lazy imports and no cpu fallback.
 
-    This synchronous host-to-host API includes input checks, float32 conversion,
-    uploads, launches, and downloads. Its latency is not kernel execution time.
-    Explicit GPU requests fail when unavailable; there is no CPU fallback.
+    run includes validation, transfers, and launches; downloads block until ready.
     """
 
     def __init__(self, device: int | None = None) -> None:
@@ -94,13 +87,12 @@ class GPUSimulator:
             imag = torch.zeros_like(real)
             real[0] = 1
         else:
-            # torch.tensor copies the contiguous split host arrays. CPU inputs
-            # keep strict complex128 validation before any float32 rounding.
+            # validate before rounding, then copy into split float32 storage.
             real = torch.tensor(state.real.copy(), device=device, dtype=torch.float32)
             imag = torch.tensor(state.imag.copy(), device=device, dtype=torch.float32)
         for gate in operations:
             apply_single_qubit(real, imag, single_qubit_matrix(gate), gate.target)
-        # Blocking device-to-host copies synchronize the work before returning.
+        # blocking device-to-host copies synchronize the work before returning.
         downloaded = np.empty(real.numel(), dtype=np.complex64)
         downloaded.real = real.cpu().numpy()
         downloaded.imag = imag.cpu().numpy()

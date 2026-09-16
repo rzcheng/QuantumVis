@@ -1,8 +1,4 @@
-"""Lazy entry point and host-side checks for the first Triton kernel.
-
-Importing this module does not import PyTorch or Triton. The low-level operation
-expects CUDA tensors and enqueues work asynchronously on their current stream.
-"""
+"""kernel entry point; keeps optional imports lazy."""
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -10,10 +6,8 @@ from numpy.typing import ArrayLike
 from quantaforge._validation import integer
 
 BLOCK_SIZE = 256
-# NVIDIA's one-dimensional grid is limited to 2**31 - 1 programs. A 40-qubit
-# state needs 2**31 blocks of 256 pairs, so reject it before allocating storage.
-# This is an index/launch bound; available device memory imposes a much lower
-# practical limit (the split state alone would occupy 4 TiB at 39 qubits).
+# 40 qubits exceed the 2**31 - 1 grid limit at 256 pairs per block.
+# memory runs out much earlier: even 39 qubits need 4 TiB of state storage.
 MAX_NUM_QUBITS = 39
 
 
@@ -28,7 +22,7 @@ def _validate_num_amplitudes(size: int) -> int:
 
 
 def _matrix_coefficients(matrix: ArrayLike) -> tuple[float, ...]:
-    """Round eight real coefficients once, checking float32 representability."""
+    """round eight real coefficients once, checking float32 representability."""
     values = np.asarray(matrix, dtype=np.complex128)
     if values.shape != (2, 2):
         raise ValueError("single-qubit matrix must have shape (2, 2)")
@@ -41,11 +35,10 @@ def _matrix_coefficients(matrix: ArrayLike) -> tuple[float, ...]:
 
 
 def apply_single_qubit(real, imag, matrix: ArrayLike, target: int) -> None:
-    """Apply a general complex 2x2 matrix in-place to split CUDA float32 arrays.
+    """apply a general complex 2x2 matrix in-place to split cuda float32 arrays.
 
-    This is a low-level asynchronous API. Callers own stream synchronization;
-    neither normalized input nor matrix unitarity is enforced here. Use
-    GPUSimulator for validated quantum-state inputs and synchronous CPU results.
+    callers handle synchronization. normalization and unitarity are unchecked;
+    use GPUSimulator for validated inputs and synchronous results.
     """
     from quantaforge.gpu.kernels.single_qubit import apply_single_qubit as apply
 

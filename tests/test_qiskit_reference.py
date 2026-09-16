@@ -1,4 +1,4 @@
-"""Optional independent simulator comparisons; no QuantaForge matrices in the oracle."""
+"""optional independent simulator comparisons; no quantaforge matrices in the oracle."""
 
 import platform
 from importlib.util import find_spec
@@ -21,7 +21,7 @@ SINGLE_GATES = ("X", "Y", "Z", "H", "S", "T", "RX", "RY", "RZ")
 def qiskit_api(record_testsuite_property):
     if find_spec("qiskit") is None:
         pytest.skip("optional Qiskit comparison: install quantaforge[verification]")
-    # A broken installed reference must fail visibly, not turn into a skip.
+    # a broken installed reference must fail visibly, not turn into a skip.
     import qiskit
     from qiskit.quantum_info import Statevector
 
@@ -38,7 +38,7 @@ def qiskit_api(record_testsuite_property):
 
 
 def reference_circuit(circuit, qiskit_api):
-    """Translate gate names/arguments only; Qiskit owns its matrices and evolution."""
+    """translate gate names/arguments only; qiskit owns its matrices and evolution."""
     quantum_circuit, _ = qiskit_api
     reference = quantum_circuit(circuit.num_qubits)
     for gate in circuit.operations:
@@ -57,7 +57,7 @@ def compare(circuit, initial, qiskit_api, *, context=""):
     original = initial.copy()
     expected = reference_state(initial.copy()).evolve(reference_circuit(circuit, qiskit_api))
     actual = CPUSimulator().run(circuit, initial_state=initial)
-    # Compare raw amplitudes: Statevector.equiv would hide global-phase errors.
+    # compare raw amplitudes: statevector.equiv would hide global-phase errors.
     assert_allclose(actual.amplitudes, expected.data, atol=ATOL, rtol=0, err_msg=context)
     assert_allclose(actual.probabilities(), expected.probabilities(), atol=ATOL, rtol=0)
     assert_allclose(np.vdot(actual.amplitudes, actual.amplitudes), 1, atol=ATOL, rtol=0)

@@ -1,4 +1,4 @@
-"""Host-only boundary tests, never evidence that a Triton kernel executed."""
+"""host-only boundary tests, never evidence that a triton kernel executed."""
 
 import subprocess
 import sys
@@ -53,7 +53,7 @@ def runtime_must_not_be_queried(monkeypatch):
 
 @pytest.mark.parametrize("name", ("cx", "cz"))
 def test_controlled_operations_fail_before_runtime_or_allocation(name, runtime_must_not_be_queried):
-    # Even a supported prefix must not run before the unsupported gate is found.
+    # even a supported prefix must not run before the unsupported gate is found.
     circuit = getattr(Circuit(2).h(0), name)(0, 1)
     with pytest.raises(NotImplementedError, match="only single-qubit gates"):
         GPUSimulator().run(circuit)

@@ -1,4 +1,4 @@
-"""Prepare (|00> + |11>)/sqrt(2) and verify its amplitudes."""
+"""prepare (|00> + |11>)/sqrt(2) and verify its amplitudes."""
 
 import numpy as np
 

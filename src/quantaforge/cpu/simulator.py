@@ -1,4 +1,4 @@
-"""State-vector execution with vectorized NumPy amplitude-pair operations."""
+"""state-vector execution with vectorized numpy amplitude-pair operations."""
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -11,7 +11,7 @@ from quantaforge.state import StateVector
 
 def _apply_single_qubit(state: NDArray[np.complex128], gate: Gate) -> None:
     matrix = single_qubit_matrix(gate)
-    # Reshape groups by target bit: each column position is one disjoint pair.
+    # reshape groups by target bit: each column position is one disjoint pair.
     pairs = state.reshape(-1, 2, 1 << gate.target)
     low = pairs[:, 0, :].copy()
     high = pairs[:, 1, :].copy()
@@ -20,8 +20,7 @@ def _apply_single_qubit(state: NDArray[np.complex128], gate: Gate) -> None:
 
 
 def _apply_controlled(state: NDArray[np.complex128], gate: Gate) -> None:
-    # Insert zero bits at the target and control positions into a compact index.
-    # The resulting 2**(n-2) indices each identify a distinct controlled pair.
+    # insert zero target/control bits to enumerate each controlled pair once.
     first, second = sorted((gate.target, gate.control))
     low = np.arange(state.size >> 2, dtype=np.intp)
     for bit in (first, second):
@@ -33,12 +32,12 @@ def _apply_controlled(state: NDArray[np.complex128], gate: Gate) -> None:
         saved = state[low].copy()
         state[low] = state[high]
         state[high] = saved
-    else:  # CZ: only amplitudes whose control and target bits are both 1 change.
+    else:  # cz: only amplitudes whose control and target bits are both 1 change.
         state[high] *= -1
 
 
 class CPUSimulator:
-    """Execute a circuit from zero or an explicitly supplied normalized state."""
+    """execute a circuit from zero or an explicitly supplied normalized state."""
 
     def run(
         self, circuit: Circuit, *, initial_state: ArrayLike | StateVector | None = None

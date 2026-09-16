@@ -119,8 +119,7 @@ def test_cli_invalid_configuration_does_not_create_artifact(tmp_path):
 
 @pytest.mark.parametrize("changed_source", (False, True))
 def test_benchmark_provenance_checks_the_source_actually_imported(tmp_path, changed_source):
-    # Real subprocess imports exercise the installed-copy ambiguity, not mocks of
-    # metadata or numerical execution. Matching wheel/source copies remain usable.
+    # check actual imports from a second copy, including a matching source tree.
     root = Path(__file__).resolve().parents[1]
     package = tmp_path / "quantaforge"
     shutil.copytree(root / "src/quantaforge", package, ignore=shutil.ignore_patterns("__pycache__"))

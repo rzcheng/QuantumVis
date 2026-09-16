@@ -50,8 +50,7 @@ def test_sampling_matches_born_probabilities():
     state = StateVector(np.sqrt(probabilities) * phases)
     shots = 50_000
     counts = np.bincount(state.sample(shots, seed=719), minlength=4)
-    # Six binomial standard deviations plus one sample: deterministic and generous,
-    # but small enough to detect a biased sampler or amplitude-vs-probability bug.
+    # six standard deviations leave room for sampling noise, not systematic bias.
     tolerance = 6 * np.sqrt(probabilities * (1 - probabilities) / shots) + 1 / shots
     assert np.all(np.abs(counts / shots - probabilities) < tolerance)
 

@@ -1,4 +1,4 @@
-"""Capability-decision tests with dependency stand-ins; no GPU execution is mocked."""
+"""capability-decision tests with dependency stand-ins; no gpu execution is mocked."""
 
 import os
 import subprocess
@@ -167,8 +167,7 @@ def test_unexpected_driver_error_is_not_silently_skipped(runtime_environment):
 
 
 def test_cpu_and_gpu_interface_imports_do_not_import_optional_frameworks():
-    # A fresh process with an import blocker verifies absence independently of this
-    # machine's installed PyTorch. This does not emulate or run a GPU operation.
+    # hide installed pytorch to check the missing-dependency path.
     code = """
 import importlib.abc
 import sys

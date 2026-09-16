@@ -1,4 +1,4 @@
-"""CPU-only validation-command control flow; none of these tests executes a GPU."""
+"""cpu-only validation-command control flow; none of these tests executes a gpu."""
 
 import json
 from dataclasses import replace
@@ -97,7 +97,7 @@ def test_detection_configuration_errors_remain_debuggable(monkeypatch):
 def test_unexpected_validation_errors_are_not_downgraded_to_unavailable(
     monkeypatch, capsys, json_output
 ):
-    # This tests propagation only. No GPU output or numerical success is mocked.
+    # this tests propagation only. no gpu output or numerical success is mocked.
     status = replace(unavailable_status(), usable=True, reason="usable", device_index=0)
     monkeypatch.setattr(validate_gpu, "gpu_status", lambda device: status)
 
@@ -120,7 +120,7 @@ def test_unexpected_validation_errors_are_not_downgraded_to_unavailable(
 
 
 def test_reported_validation_failure_has_nonzero_exit(monkeypatch, capsys):
-    # Exercise a named error pathway, not a fabricated kernel or fake GPU result.
+    # exercise a named error pathway, not a fabricated kernel or fake gpu result.
     status = replace(unavailable_status(), usable=True, reason="usable", device_index=0)
     monkeypatch.setattr(validate_gpu, "gpu_status", lambda device: status)
 
@@ -135,8 +135,8 @@ def test_reported_validation_failure_has_nonzero_exit(monkeypatch, capsys):
     assert report["failure"] == "reported numerical mismatch"
 
 
-# These are host-side tests of the numerical acceptance checker, not kernel
-# simulations or evidence of GPU numerical correctness.
+# these are host-side tests of the numerical acceptance checker, not kernel
+# simulations or evidence of gpu numerical correctness.
 def test_checker_accepts_known_float32_rounded_analytical_state():
     import numpy as np
 

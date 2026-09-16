@@ -11,3 +11,6 @@ dist/
 .DS_Store
 node_modules/
 validation/results/
+.env
+.env.*
+!.env.example

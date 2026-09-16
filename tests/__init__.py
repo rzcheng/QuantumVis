@@ -1,1 +1,1 @@
-"""Numerical and API regression tests for QuantaForge."""
+"""numerical and api regression tests for quantaforge."""

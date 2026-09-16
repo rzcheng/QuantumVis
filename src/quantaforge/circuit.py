@@ -1,4 +1,4 @@
-"""An ordered circuit description, independent of execution backend."""
+"""an ordered circuit description, independent of execution backend."""
 
 from __future__ import annotations
 

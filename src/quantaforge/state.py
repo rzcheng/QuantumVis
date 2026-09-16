@@ -1,4 +1,4 @@
-"""Owned, read-only CPU state-vector results."""
+"""owned, read-only cpu state-vector results."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from quantaforge.measurement import _validated_amplitudes, probabilities, sample
 
 
 class StateVector:
-    """A normalized complex128 state with qubit 0 at the least significant bit."""
+    """a normalized complex128 state with qubit 0 at the least significant bit."""
 
     def __init__(self, amplitudes: ArrayLike) -> None:
         self._amplitudes = _validated_amplitudes(amplitudes).copy()
@@ -29,7 +29,7 @@ class StateVector:
 
     @property
     def amplitudes(self) -> NDArray[np.complex128]:
-        """Read-only view; use .copy() to obtain independently mutable storage."""
+        """read-only view; use .copy() to obtain independently mutable storage."""
         return self._amplitudes.view()
 
     def probabilities(self) -> NDArray[np.float64]:

@@ -1,4 +1,4 @@
-"""Host-only evidence/command tests; synthetic reports are not GPU validation."""
+"""host-only evidence/command tests; synthetic reports are not gpu validation."""
 
 import json
 import os
@@ -54,7 +54,7 @@ def test_junit_rejects_mismatched_counters(tmp_path, field):
 
 @pytest.fixture
 def synthetic_validator_report():
-    # Only the artifact protocol is tested; no kernel return values are invented.
+    # only the artifact protocol is tested; no kernel return values are invented.
     return {"status": "PASS", "environment": {"usable": True}, "checks": [{}], "checks_passed": 1}
 
 
@@ -136,7 +136,7 @@ def test_invalid_timeout_does_not_create_output(tmp_path, timeout):
 
 def test_unavailable_run_saves_report_and_never_launches_pytest(tmp_path, monkeypatch):
     def unavailable_command(name, command, output, env, timeout):
-        # Exercise subprocess failure reporting only, never numerical GPU success.
+        # exercise subprocess failure reporting only, never numerical gpu success.
         assert name != "pytest"
         assert env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] == "1"
         assert "PYTEST_ADDOPTS" not in env
@@ -159,8 +159,7 @@ def test_unavailable_run_saves_report_and_never_launches_pytest(tmp_path, monkey
 
 
 def test_real_pytest_skip_has_zero_exit_but_is_rejected_as_acceptance(tmp_path):
-    # A real small host pytest invocation reproduces the all-skipped exit-0 trap.
-    # It is neither a fake GPU implementation nor evidence of device correctness.
+    # pytest exits zero even when every test skips.
     test = tmp_path / "test_skip.py"
     test.write_text(
         "import pytest\ndef test_requires_hardware():\n    pytest.skip('no hardware')\n"
@@ -202,8 +201,7 @@ def test_real_pytest_skip_has_zero_exit_but_is_rejected_as_acceptance(tmp_path):
 def test_evidence_aggregation_requires_every_condition(
     tmp_path, monkeypatch, synthetic_validator_report, scenario, expected_status, expected_exit
 ):
-    # This is a test of evidence aggregation with synthetic records, NOT mocked
-    # quantum execution or a GPU success. Real device tests stay in their suite.
+    # synthetic reports test aggregation, not gpu execution.
     output = tmp_path / "evidence"
     called = []
 

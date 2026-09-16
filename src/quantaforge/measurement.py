@@ -1,11 +1,11 @@
-"""Computational-basis probabilities and non-collapsing seeded sampling."""
+"""computational-basis probabilities and non-collapsing seeded sampling."""
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from quantaforge._validation import integer
 
-# Input and output validation is deliberately stricter than prospective float32 GPU checks.
+# strict cpu tolerance; float32 gpu results use separate error budgets.
 NORM_ATOL = 1e-12
 
 
@@ -22,16 +22,15 @@ def _validated_amplitudes(amplitudes: ArrayLike) -> NDArray[np.complex128]:
 
 
 def probabilities(amplitudes: ArrayLike) -> NDArray[np.float64]:
-    """Return |amplitude|**2 after validating the input state; do not rescale it."""
+    """return |amplitude|**2 after validating the input state; do not rescale it."""
     state = _validated_amplitudes(amplitudes)
     return state.real**2 + state.imag**2
 
 
 def sample(amplitudes: ArrayLike, shots: int, *, seed: int | None = None) -> NDArray[np.int64]:
-    """Draw basis indices with replacement; the input state does not collapse.
+    """draw basis indices with replacement; the input state does not collapse.
 
-    Only the probability weights used by the RNG are rescaled to sum to one,
-    after checking the state norm, to remove harmless floating-point drift.
+    rescale rng weights after norm validation; leave amplitudes unchanged.
     """
     shots = integer(shots, "shots")
     if seed is not None:

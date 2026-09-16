@@ -1,4 +1,4 @@
-"""Measure complete CPU single-gate run() latency, never kernel-only time."""
+"""measure complete cpu single-gate run() latency, never kernel-only time."""
 
 from __future__ import annotations
 
@@ -95,7 +95,7 @@ def _metadata() -> dict:
     except ModuleNotFoundError as error:
         if error.name != "threadpoolctl":
             raise
-        pools = None  # Optional introspection; never a benchmark dependency.
+        pools = None  # optional introspection; never a benchmark dependency.
     else:
         pools = threadpool_info()
     return {
@@ -121,7 +121,7 @@ def _metadata() -> dict:
 
 
 def _reference_gate(state: np.ndarray, gate: Gate) -> np.ndarray:
-    """Independent full-index formulas, without simulator matrices or pair reshaping."""
+    """independent full-index formulas, without simulator matrices or pair reshaping."""
     indices = np.arange(state.size)
     bit = (indices & (1 << gate.target)) != 0
     partner = state[indices ^ (1 << gate.target)]
@@ -175,7 +175,7 @@ def _measure_case(
         result = simulator.run(circuit, initial_state=initial)
         stop = time.perf_counter_ns()
         elapsed.append(stop - start)
-        del result  # Destruction of a previous result is outside the next timed call.
+        del result  # destruction of a previous result is outside the next timed call.
     return {
         "num_qubits": num_qubits,
         "state_size": initial.size,
@@ -202,7 +202,7 @@ def benchmark_gates(
     repetitions: int = 31,
     seed: int = 20260914,
 ) -> dict:
-    """Validate all configuration before allocation, then measure independent calls."""
+    """validate all configuration before allocation, then measure independent calls."""
     _integer(warmups, "warmups", 1, 10000)
     _integer(repetitions, "repetitions", 3, 10000)
     _integer(seed, "seed", 0)
