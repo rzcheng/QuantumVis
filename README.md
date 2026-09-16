@@ -19,9 +19,11 @@ CPU benchmark prechecks. Awaiting NVIDIA hardware: Triton compilation/execution,
 analytical and differential GPU checks, the full GPU pytest suite, and GPU timings.
 **Milestone 2 remains incomplete.**
 
-The current local suite reports **552 passed, 0 failed, 634 GPU cases skipped**.
-The added passing cases test host boundaries, validation reporting/error budgets,
-acceptance evidence, and benchmark correctness; they do not establish Triton execution.
+With the optional Qiskit verification extra installed, the current local suite
+reports **739 passed, 0 failed, 673 GPU cases skipped**. This includes 185 independent
+Qiskit comparisons. Other added passing cases test host boundaries, validation
+reporting/error budgets, acceptance evidence, and benchmark correctness; none
+establishes Triton execution.
 
 The current scope is pure-state simulation of X, Y, Z, H, S, T, RX, RY, RZ, CX
 (CNOT), and CZ, with probabilities and seeded computational-basis sampling.
@@ -116,8 +118,19 @@ circuits in `complex128` (example assertions use `1e-12` for both). This toleran
 promise for arbitrary circuit depth or future `float32` GPU execution.
 
 CPU CI runs the checks without installing a GPU stack. Random tests use explicit
-seeds. A trusted external simulator is an optional additional cross-check, not a
-runtime dependency or a substitute for analytical tests.
+seeds. An optional Qiskit suite compares all supported gates and twelve seeded
+48-gate circuits at every prefix, with the same strict amplitude tolerance and
+without discarding global phase. It runs in a separate CI job. Install and run it:
+
+```bash
+python -m pip install -e '.[verification]'
+python -m pytest -q tests/test_qiskit_reference.py
+```
+
+These tests skip explicitly when Qiskit is absent; broken installed references
+fail visibly. Qiskit is not a runtime dependency. See the
+[external verification details](docs/external-verification.md) for independence,
+bit ordering, covered cases, recorded versions, and limitations.
 
 ## GPU status and performance work
 

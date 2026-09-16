@@ -1,5 +1,52 @@
 # Validation records
 
+## Independent reference and robustness review, 2026-09-15
+
+Starting revision: `3cc8293`, branch `feat/triton-backend`. CPU simulator source,
+the original 376 CPU tests, Triton source, numerical tolerances, and timing
+boundaries are unchanged. This review adds optional Qiskit verification, expands
+real-device test coverage, and fixes an observed benchmark provenance defect.
+
+| Check | Result |
+| --- | --- |
+| Full local suite with Qiskit 2.5.2 | **739 passed, 0 failed, 673 GPU cases skipped**, 2.14 s |
+| Qiskit comparison file | 185 passed, 0 failed/skipped, 1.04 s; Python/NumPy/Qiskit/seed/tolerances recorded in JUnit |
+| Benchmark tests | 51 passed, including two real subprocess installed-source cases |
+| Fresh CPU-only wheel environment | **554 passed, 0 failed, 858 skipped**, 1.83 s; 673 GPU + 185 optional Qiskit skips |
+| Fresh environment dependency boundary | PyTorch, Triton, and Qiskit absent; import resolves to the installed wheel |
+| CPU-only wheel GPU validator | UNAVAILABLE, exit 2, 0 checks; missing packages recorded |
+| Ruff lint / format | All checks passed; 34 Python files formatted |
+| Packaging / dependencies | Wheel and source archive built; optional metadata and archive contents inspected; `pip check` passed |
+| Bell / GHZ examples | Analytical assertions and deterministic samples passed |
+| CPU benchmark smoke | 8 H/RX cases at 8/10 qubits; 24 raw timings; correctness prechecks and all 8 imported-module hashes verified |
+| CI configuration | YAML parses; separate Qiskit job added with JUnit retention; hosted jobs not run |
+
+The 187 new passing cases are 185 external comparisons and 2 provenance
+regressions. The 39 new GPU cases cover all nine gates at three targets in
+18-qubit states, two 64-gate circuits, and ten offset-view/guard-region cases.
+They **only collected and skipped** here. Their device allocations, execution,
+and assertions remain unverified until the full NVIDIA suite actually passes.
+The existing one-command acceptance runner includes them automatically.
+
+Qiskit comparisons use named gates and its own state evolution, never production
+matrices. A supplementary sensitivity experiment changed three temporary copies
+of the CPU source: reversed Y phase caused 10 failures, reversed CX direction
+caused 28, and replacing RZ with a globally shifted phase gate caused 1. All three
+incorrect implementations were rejected while preserving unitary norm; no such
+mutation touched the repository. These are manual checks of test sensitivity,
+not additional passing pytest cases. See [external verification](external-verification.md).
+
+The provenance defect was reproduced by importing a different temporary copy of
+the CPU implementation: the old harness recorded checkout hashes that did not
+match the imported code. The fix checks imported-module hashes before timing and
+records their paths. A mismatch now exits 2 without an artifact; a byte-identical
+copy runs successfully. The numerical implementation, timed region, raw-trial
+retention, statistics, and existing saved benchmark artifact are unchanged.
+
+Local smoke/JUnit output is retained under ignored `validation/results/`; it is
+not a performance comparison or GPU acceptance result. No new speedup claim is
+made. NVIDIA compilation/correctness, GPU performance, and hosted CI remain open.
+
 ## NVIDIA acceptance handoff, 2026-09-15
 
 Added `scripts/validate_nvidia.py` to collect complete remote acceptance evidence

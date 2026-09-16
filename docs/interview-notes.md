@@ -33,6 +33,17 @@ exists, but actual NVIDIA correctness and performance are still unverified.
    gate wrapper overhead, transfers, and full circuit execution. Today's CPU JSON
    times complete one-gate `run()` calls, including validation and copies. A GPU
    kernel-only time would not be a fair direct comparison to that metric.
+9. **How independent is a reference?** Trace the Qiskit comparison from named
+   gates to state evolution. Explain why feeding it QuantaForge's own matrices
+   would miss matrix-definition bugs, and why comparing only final probabilities
+   would miss phase errors. The prefix checks locate the first disagreement;
+   neither an external library nor a large passing test count is a proof for all
+   inputs. Try reversing a CX control/target or changing a rotation's global phase
+   in a temporary copy and predict which checks should fail.
+10. **Which code was measured?** Compare the source path Python imported with
+    the checkout whose Git revision is recorded. Explain how an old installed
+    package can make those disagree. Read the new loaded-source hashes in a CPU
+    benchmark report; hashes establish source identity, not fair timing boundaries.
 
 Before claiming an improvement, name the measured workload, precision, hardware,
 software versions, baseline, metric boundary, raw artifact, and correctness evidence.
