@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from quantaforge import Circuit, CPUSimulator
+from quantumvis import Circuit, CPUSimulator
 
 
 def main() -> None:

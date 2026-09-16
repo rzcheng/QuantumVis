@@ -70,7 +70,7 @@ jobs:
 
           output = Path("validation/results/compile-only")
           output.mkdir(parents=True, exist_ok=False)
-          source = Path("src/quantaforge/gpu/kernels/single_qubit.py")
+          source = Path("src/quantumvis/gpu/kernels/single_qubit.py")
           target = "cuda:87:32"
           command = [sys.executable, "-m", "triton.tools.compile", str(source),
                      "--kernel-name", "_single_qubit_kernel", "--target", target,

@@ -5,8 +5,8 @@ import triton
 import triton.language as tl
 from numpy.typing import ArrayLike
 
-from quantaforge._validation import integer
-from quantaforge.gpu.kernels import BLOCK_SIZE, _matrix_coefficients, _validate_num_amplitudes
+from quantumvis._validation import integer
+from quantumvis.gpu.kernels import BLOCK_SIZE, _matrix_coefficients, _validate_num_amplitudes
 
 
 @triton.jit

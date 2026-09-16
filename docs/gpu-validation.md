@@ -19,7 +19,7 @@ These are separate records. None of the first three can accept Milestone 2.
 
 ## Compatibility and installation audit
 
-No platform has confirmed QuantaForge **device correctness** yet. The table
+No platform has confirmed QuantumVis **device correctness** yet. The table
 distinguishes package/hardware eligibility from actual execution evidence.
 
 | Platform | Architecture | Expected status | Blocker / requirement |
@@ -54,8 +54,8 @@ are added to the base NumPy installation.
 ## Preflight
 
 ```bash
-python -m quantaforge.gpu_preflight
-python -m quantaforge.gpu_preflight --smoke --json
+python -m quantumvis.gpu_preflight
+python -m quantumvis.gpu_preflight --smoke --json
 ```
 
 Default preflight checks runtime eligibility, architecture, dependency major/minor
@@ -81,7 +81,7 @@ Use a separate Linux x86_64/Python 3.12 environment. The development Mac has no
 Triton installation; neither interpreter execution nor compile-only execution
 has been performed locally. Hosted interpreter validation has now passed on
 Linux with Triton 3.6.0 and 3.8.0:
-[147 passed, zero skips per version](https://github.com/rzcheng/quantum-sim/actions/runs/35063367779).
+[147 passed, zero skips per version](https://github.com/rzcheng/QuantumVis/actions/runs/35063367779).
 No NVIDIA execution or compilation is implied. No emulator or alternate kernel is added.
 
 ```bash
@@ -129,7 +129,7 @@ The underlying Linux command, after the environment setup above, is:
 ```bash
 mkdir -p validation/results/compile-only
 TRITON_INTERPRET=0 python -m triton.tools.compile \
-  src/quantaforge/gpu/kernels/single_qubit.py \
+  src/quantumvis/gpu/kernels/single_qubit.py \
   --kernel-name _single_qubit_kernel --target cuda:87:32 \
   --signature '*fp32,*fp32,i32,fp32,fp32,fp32,fp32,fp32,fp32,fp32,fp32,0,256' \
   --grid '1,1,1' --num-warps 4 --out-path validation/results/compile-only/kernel
@@ -162,7 +162,7 @@ This is metadata compatibility, not evidence of a working Jetson kernel.
 
 Do not install desktop CUDA wheels blindly on Jetson. Check the board, JetPack,
 Python ABI, and the [NVIDIA PyTorch installation guide](https://docs.nvidia.com/deeplearning/frameworks/install-pytorch-jetson-platform/index.html).
-QuantaForge requires Python 3.11+, which may not match the available JetPack wheel.
+QuantumVis requires Python 3.11+, which may not match the available JetPack wheel.
 The compatible CUDA PyTorch build and an importable Triton on Linux aarch64 must
 be established first. The CPU-only interpreter environment above cannot run the
 device suite. After installing the matching GPU stack, install this project with
@@ -173,7 +173,7 @@ access is available:
 ```bash
 cat /etc/nv_tegra_release
 cat /proc/device-tree/model
-python -m quantaforge.gpu_preflight --smoke --json
+python -m quantumvis.gpu_preflight --smoke --json
 ```
 
 If `nvidia-smi` runs successfully, its output remains the metadata source. If the
@@ -213,7 +213,7 @@ workstation with an Ampere/Ada NVIDIA GPU and working CUDA PyTorch/Triton.
 
 Use Linux x86_64, Python 3.12 (the first device target; the package requires 3.11+),
 a working NVIDIA driver, and a GPU with compute capability at least 8.0. This is
-QuantaForge's conservative initial support boundary, not a claim that all earlier
+QuantumVis's conservative initial support boundary, not a claim that all earlier
 hardware is inherently incapable of Triton. Confirm the installed Triton release's
 [upstream compatibility requirements](https://github.com/triton-lang/triton#compatibility).
 
@@ -227,15 +227,15 @@ official wheel; do not substitute an unverified combination silently.
 set -e
 unset TRITON_INTERPRET
 nvidia-smi
-git clone --branch feat/triton-backend https://github.com/rzcheng/quantum-sim.git
-cd quantum-sim
+git clone --branch feat/triton-backend https://github.com/rzcheng/QuantumVis.git
+cd QuantumVis
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements-dev.txt
 python -m pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cu126
 python -m pip install --no-build-isolation -e '.[gpu]'
 python -m pip check
-python -m quantaforge.gpu_preflight --smoke
+python -m quantumvis.gpu_preflight --smoke
 python scripts/validate_nvidia.py --output validation/results/nvidia-first-run
 ```
 
@@ -294,13 +294,13 @@ Actual NVIDIA execution of this wrapper and both suites remains unverified.
 The quick deterministic check alone is:
 
 ```bash
-python -m quantaforge.validate_gpu
+python -m quantumvis.validate_gpu
 ```
 
 To capture metadata and per-check errors as a structured artifact, use:
 
 ```bash
-python -m quantaforge.validate_gpu --json > gpu-validation.json
+python -m quantumvis.validate_gpu --json > gpu-validation.json
 python -m pytest tests/test_gpu_correctness.py -ra
 python -m pip freeze > gpu-validation-requirements.txt
 git rev-parse HEAD > gpu-validation-commit.txt

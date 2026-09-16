@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from quantaforge import gpu_preflight as preflight
+from quantumvis import gpu_preflight as preflight
 
 from .test_validate_gpu import unavailable_status
 
@@ -58,7 +58,7 @@ def test_ready_without_smoke_does_not_claim_execution(prerequisites, monkeypatch
     assert code == 0 and report["status"] == "READY"
     assert report["minimum_requirements_satisfied"]
     assert report["kernel_import"] == "PASS" and report["smoke"] == "NOT_RUN"
-    assert imported == ["quantaforge.gpu.kernels.single_qubit"]
+    assert imported == ["quantumvis.gpu.kernels.single_qubit"]
     assert report["cuda_build_version"] == "12.6"
     assert report["cuda_runtime_version"] is None
     assert "no kernel was executed" in report["reason"]

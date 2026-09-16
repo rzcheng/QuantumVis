@@ -11,10 +11,10 @@ from pathlib import Path
 import numpy as np
 
 from benchmarks.benchmark_gates import _metadata
-from quantaforge import Circuit, CPUSimulator
-from quantaforge.gpu import GPUSimulator, GPUUnavailableError
-from quantaforge.gpu.runtime import require_gpu
-from quantaforge.validate_gpu import SEED, check_output, random_state
+from quantumvis import Circuit, CPUSimulator
+from quantumvis.gpu import GPUSimulator, GPUUnavailableError
+from quantumvis.gpu.runtime import require_gpu
+from quantumvis.validate_gpu import SEED, check_output, random_state
 from scripts.validate_nvidia import ROOT, source_hashes
 
 
@@ -49,9 +49,9 @@ def benchmark(acceptance: Path) -> dict:
     status = require_gpu()
     import torch
 
-    import quantaforge.gpu.kernels.single_qubit as kernel_module
-    import quantaforge.gpu.runtime as runtime_module
-    import quantaforge.gpu.simulator as simulator_module
+    import quantumvis.gpu.kernels.single_qubit as kernel_module
+    import quantumvis.gpu.runtime as runtime_module
+    import quantumvis.gpu.simulator as simulator_module
 
     sources = [
         Path(module.__file__) for module in (kernel_module, runtime_module, simulator_module)

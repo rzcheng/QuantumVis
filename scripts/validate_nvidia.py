@@ -65,7 +65,7 @@ def collect_device_metadata(driver: dict, environment: dict) -> dict:
 
 def source_hashes(root: Path) -> dict[str, str]:
     paths = [root / "pyproject.toml", root / "requirements-dev.txt"]
-    for directory in ("src/quantaforge", "tests", "scripts"):
+    for directory in ("src/quantumvis", "tests", "scripts"):
         paths.extend((root / directory).rglob("*.py"))
     return {
         str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest()
@@ -183,7 +183,7 @@ def main(argv: list[str] | None = None) -> int:
             "packages",
             [sys.executable, "-m", "pip", "list", "--format=json", "--disable-pip-version-check"],
         )
-        validation = run("validator", [sys.executable, "-m", "quantaforge.validate_gpu", "--json"])
+        validation = run("validator", [sys.executable, "-m", "quantumvis.validate_gpu", "--json"])
         try:
             details = json.loads((output / "validator.stdout").read_text())
         except json.JSONDecodeError as error:

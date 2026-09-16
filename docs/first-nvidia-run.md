@@ -14,7 +14,7 @@ mkdir validation/results/first-nvidia
 python -m pip check
 git rev-parse HEAD > validation/results/first-nvidia/commit.txt
 python -m pip list --format=json > validation/results/first-nvidia/packages.json
-python -m quantaforge.gpu_preflight --smoke --json \
+python -m quantumvis.gpu_preflight --smoke --json \
   > validation/results/first-nvidia/preflight.json \
   2> validation/results/first-nvidia/preflight.stderr
 ```
@@ -33,7 +33,7 @@ python scripts/validate_nvidia.py \
   --output validation/results/first-nvidia/acceptance
 ```
 
-This runs the standalone `python -m quantaforge.validate_gpu --json` first, then
+This runs the standalone `python -m quantumvis.validate_gpu --json` first, then
 the complete `tests/test_gpu_correctness.py` file. Require runner exit 0 and
 `acceptance/summary.json` status PASS: 108 standalone checks and 673 pytest cases,
 with zero failures/errors/skips. `validator.stdout`, `gpu-tests.xml`, and command

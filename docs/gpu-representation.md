@@ -20,7 +20,7 @@ arithmetic directly. Use real pointers and expand the arithmetic explicitly.
 
 Triton 3.8.0 lists Linux and NVIDIA GPUs with compute capability 8.0 or later,
 or supported AMD GPUs with ROCm 6.2 or later. The Apple GPU cannot validate this
-backend. The first QuantaForge GPU target will be Linux/NVIDIA; a CUDA-enabled
+backend. The first QuantumVis GPU target will be Linux/NVIDIA; a CUDA-enabled
 PyTorch installation, compatible driver, and compatible Triton/PyTorch versions
 must be selected and recorded on that machine before implementation. Do not
 assume that independently installing the newest releases makes a compatible

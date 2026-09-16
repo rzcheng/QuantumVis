@@ -5,8 +5,8 @@ from dataclasses import replace
 
 import pytest
 
-from quantaforge import validate_gpu
-from quantaforge.gpu.runtime import GPUStatus
+from quantumvis import validate_gpu
+from quantumvis.gpu.runtime import GPUStatus
 
 
 def unavailable_status():

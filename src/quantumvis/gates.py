@@ -6,7 +6,7 @@ from numbers import Real
 import numpy as np
 from numpy.typing import NDArray
 
-from quantaforge._validation import integer
+from quantumvis._validation import integer
 
 SINGLE_QUBIT_GATES = frozenset({"X", "Y", "Z", "H", "S", "T", "RX", "RY", "RZ"})
 CONTROLLED_GATES = frozenset({"CX", "CZ"})

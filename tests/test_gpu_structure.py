@@ -8,15 +8,15 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
-from quantaforge import Circuit, StateVector
-from quantaforge.gpu.kernels import (
+from quantumvis import Circuit, StateVector
+from quantumvis.gpu.kernels import (
     BLOCK_SIZE,
     MAX_NUM_QUBITS,
     _matrix_coefficients,
     _validate_num_amplitudes,
 )
-from quantaforge.gpu.runtime import GPUUnavailableError
-from quantaforge.gpu.simulator import GPUResult, GPUSimulator
+from quantumvis.gpu.runtime import GPUUnavailableError
+from quantumvis.gpu.simulator import GPUResult, GPUSimulator
 
 
 def test_public_imports_do_not_need_torch_or_triton():
@@ -30,10 +30,10 @@ def test_public_imports_do_not_need_torch_or_triton():
                     raise AssertionError(f'unexpected optional import: {fullname}')
 
         sys.meta_path.insert(0, RejectGPUImports())
-        from quantaforge import CPUSimulator, Circuit
-        from quantaforge.gpu import GPUSimulator
-        from quantaforge.gpu.kernels import apply_single_qubit
-        from quantaforge.gpu.simulator import GPUResult
+        from quantumvis import CPUSimulator, Circuit
+        from quantumvis.gpu import GPUSimulator
+        from quantumvis.gpu.kernels import apply_single_qubit
+        from quantumvis.gpu.simulator import GPUResult
 
         CPUSimulator().run(Circuit(1).x(0))
         GPUSimulator()
@@ -48,7 +48,7 @@ def runtime_must_not_be_queried(monkeypatch):
     def unexpected_runtime_query(device=None):
         pytest.fail("invalid input must be rejected before querying the GPU runtime")
 
-    monkeypatch.setattr("quantaforge.gpu.simulator.require_gpu", unexpected_runtime_query)
+    monkeypatch.setattr("quantumvis.gpu.simulator.require_gpu", unexpected_runtime_query)
 
 
 @pytest.mark.parametrize("name", ("cx", "cz"))
@@ -99,7 +99,7 @@ def test_gpu_requests_propagate_unavailability_without_cpu_fallback(monkeypatch,
         assert device == 2
         raise GPUUnavailableError("test runtime has no NVIDIA GPU")
 
-    monkeypatch.setattr("quantaforge.gpu.simulator.require_gpu", unavailable)
+    monkeypatch.setattr("quantumvis.gpu.simulator.require_gpu", unavailable)
     with pytest.raises(GPUUnavailableError, match="no NVIDIA GPU"):
         GPUSimulator(device=2).run(Circuit(1).h(0), initial_state=state)
 

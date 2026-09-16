@@ -1,4 +1,4 @@
-# QuantaForge
+# QuantumVis
 
 A state-vector quantum simulator built around a NumPy reference and custom Triton
 kernels. The main work is mapping quantum gates to GPU memory access and checking
@@ -23,6 +23,11 @@ compiled or run on NVIDIA hardware yet**. There are no GPU performance claims.
 
 See [validation records](docs/validation.md) for environments and exact checks.
 
+The project and Python package are now QuantumVis (`quantumvis`). After updating
+an existing checkout, run `python -m pip uninstall quantaforge`, then reinstall
+with `python -m pip install -e .`. Update imports to `quantumvis`; historical
+validation records and benchmark artifacts retain their original names and hashes.
+
 ## quick start
 
 From the checkout, with Python 3.11+ (3.12 shown):
@@ -38,7 +43,7 @@ python examples/ghz_state.py
 NumPy is the only required dependency.
 
 ```python
-from quantaforge import Circuit, CPUSimulator
+from quantumvis import Circuit, CPUSimulator
 
 circuit = Circuit(2).h(0).cx(0, 1)
 result = CPUSimulator().run(circuit)
@@ -109,7 +114,7 @@ The initial target is Linux/NVIDIA with compute capability 8.0+. Follow the
 Once the environment is ready:
 
 ```bash
-python -m quantaforge.gpu_preflight --smoke
+python -m quantumvis.gpu_preflight --smoke
 python scripts/validate_nvidia.py --output validation/results/nvidia-first-run
 ```
 

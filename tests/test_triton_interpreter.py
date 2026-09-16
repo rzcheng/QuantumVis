@@ -8,10 +8,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from quantaforge import Circuit, CPUSimulator
-from quantaforge.gates import Gate, single_qubit_matrix
-from quantaforge.gpu.kernels import BLOCK_SIZE, _matrix_coefficients
-from quantaforge.validate_gpu import (
+from quantumvis import Circuit, CPUSimulator
+from quantumvis.gates import Gate, single_qubit_matrix
+from quantumvis.gpu.kernels import BLOCK_SIZE, _matrix_coefficients
+from quantumvis.validate_gpu import (
     GATE_NAMES,
     SEED,
     analytical_cases,
@@ -35,7 +35,7 @@ def interpret(record_testsuite_property):
     import torch
     import triton
 
-    from quantaforge.gpu.kernels import single_qubit
+    from quantumvis.gpu.kernels import single_qubit
 
     kernel = single_qubit._single_qubit_kernel
     assert not isinstance(kernel, triton.JITFunction), "restart with TRITON_INTERPRET=1"

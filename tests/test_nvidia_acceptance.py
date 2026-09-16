@@ -186,12 +186,12 @@ def test_jetson_does_not_hide_existing_driver_failures(orin_platform, driver):
 
 
 def test_source_manifest_detects_test_and_source_changes(tmp_path):
-    (tmp_path / "src/quantaforge").mkdir(parents=True)
+    (tmp_path / "src/quantumvis").mkdir(parents=True)
     (tmp_path / "tests").mkdir()
     for name in (
         "pyproject.toml",
         "requirements-dev.txt",
-        "src/quantaforge/gate.py",
+        "src/quantumvis/gate.py",
         "tests/test_gate.py",
     ):
         (tmp_path / name).write_text("original")
@@ -199,7 +199,7 @@ def test_source_manifest_detects_test_and_source_changes(tmp_path):
     (tmp_path / "tests/test_gate.py").write_text("changed")
     second = acceptance.source_hashes(tmp_path)
     assert first != second
-    assert first["src/quantaforge/gate.py"] == second["src/quantaforge/gate.py"]
+    assert first["src/quantumvis/gate.py"] == second["src/quantumvis/gate.py"]
 
 
 def test_existing_output_is_never_overwritten(tmp_path):

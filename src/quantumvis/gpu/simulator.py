@@ -3,13 +3,13 @@
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from quantaforge._validation import integer
-from quantaforge.circuit import Circuit
-from quantaforge.gates import single_qubit_matrix
-from quantaforge.gpu.kernels import MAX_NUM_QUBITS
-from quantaforge.gpu.runtime import require_gpu
-from quantaforge.measurement import _validated_amplitudes
-from quantaforge.state import StateVector
+from quantumvis._validation import integer
+from quantumvis.circuit import Circuit
+from quantumvis.gates import single_qubit_matrix
+from quantumvis.gpu.kernels import MAX_NUM_QUBITS
+from quantumvis.gpu.runtime import require_gpu
+from quantumvis.measurement import _validated_amplitudes
+from quantumvis.state import StateVector
 
 
 class GPUResult:
@@ -79,7 +79,7 @@ class GPUSimulator:
 
         import torch
 
-        from quantaforge.gpu.kernels import apply_single_qubit
+        from quantumvis.gpu.kernels import apply_single_qubit
 
         device = torch.device("cuda", status.device_index)
         if state is None:

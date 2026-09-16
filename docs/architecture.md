@@ -1,6 +1,6 @@
 # Architecture
 
-QuantaForge separates circuit description, state ownership, and execution. The
+QuantumVis separates circuit description, state ownership, and execution. The
 first backend is a NumPy CPU reference. The initial Triton backend implements the
 same single-qubit semantics in source; its NVIDIA execution is not yet validated.
 It remains an optional dependency, separate from CPU use.

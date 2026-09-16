@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
-from quantaforge import Circuit, CPUSimulator
-from quantaforge.gates import Gate, single_qubit_matrix
+from quantumvis import Circuit, CPUSimulator
+from quantumvis.gates import Gate, single_qubit_matrix
 
 from .oracle import ATOL, dense_operator, local_matrix, random_state
 

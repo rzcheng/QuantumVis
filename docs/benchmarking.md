@@ -1,6 +1,6 @@
 # CPU benchmark methodology
 
-Run from a repository checkout with QuantaForge installed and Python 3.12+:
+Run from a repository checkout with QuantumVis installed and Python 3.12+:
 
 ```bash
 python -m benchmarks.benchmark_gates --qubits 8 12 16 18 \
@@ -56,6 +56,10 @@ runs to assess variability before claiming a trend or improvement.
 
 ## Artifact and reproduction
 
+New artifacts use `metadata.quantumvis_version` and `src/quantumvis/` source paths.
+The saved baseline predates the rename and retains `metadata.quantaforge_version`
+and its original paths/hashes. Its measurements and provenance are unchanged.
+
 Schema version 1 records the metric boundary, precision, seed and RNG rule,
 timestamp, platform, CPU model when discoverable, Python/NumPy/package versions,
 NumPy build configuration, thread environment settings, optional runtime thread
@@ -69,7 +73,7 @@ The benchmark modules are repository tools, not a second simulator API.
 
 Before any allocation or timing, the harness also hashes the **imported** CPU
 modules and checks them against this checkout's source. This prevents a different
-installed QuantaForge version from being timed under the checkout's hashes. A
+installed QuantumVis version from being timed under the checkout's hashes. A
 byte-identical wheel or source copy is accepted; a mismatch exits with an editable
 installation hint and creates no result. New reports include
 `metadata.loaded_simulator_sources` with paths and hashes. This is additional

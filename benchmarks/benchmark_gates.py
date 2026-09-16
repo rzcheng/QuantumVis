@@ -17,8 +17,8 @@ from pathlib import Path
 
 import numpy as np
 
-from quantaforge import Circuit, CPUSimulator
-from quantaforge.gates import SINGLE_QUBIT_GATES, Gate
+from quantumvis import Circuit, CPUSimulator
+from quantumvis.gates import SINGLE_QUBIT_GATES, Gate
 
 MAX_QUBITS = 20  # 16 MiB raw complex128 state; execution/checks allocate working copies.
 ROTATION_ANGLE = 0.731
@@ -34,14 +34,14 @@ THREAD_VARIABLES = (
 )
 MEASURED_SOURCES = (
     "benchmarks/benchmark_gates.py",
-    "src/quantaforge/__init__.py",
-    "src/quantaforge/_validation.py",
-    "src/quantaforge/circuit.py",
-    "src/quantaforge/gates.py",
-    "src/quantaforge/measurement.py",
-    "src/quantaforge/state.py",
-    "src/quantaforge/cpu/__init__.py",
-    "src/quantaforge/cpu/simulator.py",
+    "src/quantumvis/__init__.py",
+    "src/quantumvis/_validation.py",
+    "src/quantumvis/circuit.py",
+    "src/quantumvis/gates.py",
+    "src/quantumvis/measurement.py",
+    "src/quantumvis/state.py",
+    "src/quantumvis/cpu/__init__.py",
+    "src/quantumvis/cpu/simulator.py",
 )
 
 
@@ -107,7 +107,7 @@ def _metadata() -> dict:
         "logical_cpu_count": os.cpu_count(),
         "python_version": platform.python_version(),
         "numpy_version": np.__version__,
-        "quantaforge_version": importlib.metadata.version("quantaforge"),
+        "quantumvis_version": importlib.metadata.version("quantumvis"),
         "numpy_configuration": np.show_config(mode="dicts"),
         "thread_environment": {name: os.environ.get(name) for name in THREAD_VARIABLES},
         "threadpools_if_available": pools,

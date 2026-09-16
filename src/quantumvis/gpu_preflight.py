@@ -9,7 +9,7 @@ from dataclasses import asdict
 from importlib import import_module
 from pathlib import Path
 
-from quantaforge.gpu.runtime import gpu_status
+from quantumvis.gpu.runtime import gpu_status
 
 JETSON_FILES = {
     "l4t_release": Path("/etc/nv_tegra_release"),
@@ -48,9 +48,9 @@ def kernel_smoke() -> dict:
     """use the full production path for x|0>, including blocking download."""
     import numpy as np
 
-    from quantaforge import Circuit
-    from quantaforge.gpu import GPUSimulator
-    from quantaforge.validate_gpu import check_output
+    from quantumvis import Circuit
+    from quantumvis.gpu import GPUSimulator
+    from quantumvis.validate_gpu import check_output
 
     actual = GPUSimulator().run(Circuit(1).x(0)).amplitudes
     check = check_output("preflight-X-zero", actual, np.array([0, 1], dtype=np.complex128))
@@ -96,7 +96,7 @@ def preflight(*, smoke: bool = False) -> tuple[dict, int]:
                 return report, 2
         report["minimum_requirements_satisfied"] = True
         report["cuda_runtime_version"], report["cuda_runtime_note"] = runtime_version()
-        import_module("quantaforge.gpu.kernels.single_qubit")
+        import_module("quantumvis.gpu.kernels.single_qubit")
         report["kernel_import"] = "PASS"
         if smoke:
             report["smoke_result"] = kernel_smoke()

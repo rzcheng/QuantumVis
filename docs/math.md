@@ -9,7 +9,7 @@ $$
 \qquad \sum_i |a_i|^2 = 1.
 $$
 
-QuantaForge uses little-endian qubit indices: qubit `q` is bit `q` of integer `i`.
+QuantumVis uses little-endian qubit indices: qubit `q` is bit `q` of integer `i`.
 Printed kets put the most significant bit on the left, `|q[n-1] ... q[0]>`.
 For two qubits the array order is `|00>, |01>, |10>, |11>`. Consequently X on
 qubit 0 sends `|00>` to `|01>`; X on qubit 1 sends it to `|10>`.

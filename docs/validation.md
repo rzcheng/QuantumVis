@@ -1,5 +1,19 @@
 # Validation records
 
+## Project rename, 2026-09-16
+
+The project was renamed to QuantumVis on 2026-09-16. Earlier records refer to the
+package and source paths at their recorded revisions; their commands and hashes
+are historical evidence. Current commands use `quantumvis`. The saved CPU baseline
+and raw validation artifacts remain unchanged.
+
+Starting revision: `a303d8d`. Local Python 3.12 verification: **797 passed, 0 failed,
+820 skipped** (673 device and 147 interpreter cases). Ruff lint/format, package
+build, dependency check, and Bell/GHZ examples passed. The renamed preflight exits
+2 with BLOCKED on this Mac. All 39 Python files differ only by project naming;
+no numerical operations or tolerances changed. The built wheel/source archive
+contain the renamed package. No NVIDIA execution or new GPU timing is claimed.
+
 ## First-device preparation, 2026-09-16
 
 Starting revision: `aeaedce`. Added preflight, a three-stage device runbook, a
@@ -20,14 +34,14 @@ unchanged. No NVIDIA computation or GPU benchmark ran during this preparation.
 | Hosted Qiskit job, `1a9a20a` | **185 passed, 0 failed, 0 skipped** |
 | Hosted interpreter matrix, `1a9a20a` | Triton 3.6.0 and 3.8.0: **147 passed, 0 failed, 0 skipped each** |
 
-The [CPU matrix](https://github.com/rzcheng/quantum-sim/actions/runs/35063367767)
-and [interpreter matrix](https://github.com/rzcheng/quantum-sim/actions/runs/35063367779)
+The [CPU matrix](https://github.com/rzcheng/QuantumVis/actions/runs/35063367767)
+and [interpreter matrix](https://github.com/rzcheng/QuantumVis/actions/runs/35063367779)
 both completed successfully. Logs and both interpreter JUnit artifacts were
 downloaded and inspected. The later documentation commit only records these
 results; production/test code is the tested implementation revision. Compile-only
 was skipped by its manual-job condition, and remains unexecuted.
 
-The [hosted interpreter run](https://github.com/rzcheng/quantum-sim/actions/runs/35062312183)
+The [hosted interpreter run](https://github.com/rzcheng/QuantumVis/actions/runs/35062312183)
 executed actual production source with `TRITON_INTERPRET=1`; its JUnit artifact
 was downloaded and inspected. The manual compile-only job was skipped, so no
 compilation result is claimed. An additional interpreter job now targets Triton

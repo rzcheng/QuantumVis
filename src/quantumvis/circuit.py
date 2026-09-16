@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from quantaforge._validation import integer
-from quantaforge.gates import Gate
+from quantumvis._validation import integer
+from quantumvis.gates import Gate
 
 
 class Circuit:

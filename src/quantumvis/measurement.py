@@ -3,7 +3,7 @@
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from quantaforge._validation import integer
+from quantumvis._validation import integer
 
 # strict cpu tolerance; float32 gpu results use separate error budgets.
 NORM_ATOL = 1e-12
