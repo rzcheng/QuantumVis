@@ -67,6 +67,15 @@ The harness does not set thread counts; reproduce the recorded environment or
 explicitly choose counts in the shell before Python starts and save a new artifact.
 The benchmark modules are repository tools, not a second simulator API.
 
+Before any allocation or timing, the harness also hashes the **imported** CPU
+modules and checks them against this checkout's source. This prevents a different
+installed QuantaForge version from being timed under the checkout's hashes. A
+byte-identical wheel or source copy is accepted; a mismatch exits with an editable
+installation hint and creates no result. New reports include
+`metadata.loaded_simulator_sources` with paths and hashes. This is additional
+schema-version-1 provenance metadata; older artifacts lack that field. The timer
+boundary and statistical methodology are unchanged.
+
 Seeds use `SeedSequence([seed, num_qubits])`, so selecting a different subset or
 reordering the qubit sweep preserves the input for each size. All operations and
 targets at one size share that exact input. Saved files are small CPU snapshots,

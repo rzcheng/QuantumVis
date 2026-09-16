@@ -1,4 +1,10 @@
 import json
+import os
+import shutil
+import subprocess
+import sys
+import textwrap
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -109,3 +115,46 @@ def test_cli_invalid_configuration_does_not_create_artifact(tmp_path):
         main(["--qubits", "21", "--output", str(output)])
     assert error.value.code == 2
     assert not output.exists()
+
+
+@pytest.mark.parametrize("changed_source", (False, True))
+def test_benchmark_provenance_checks_the_source_actually_imported(tmp_path, changed_source):
+    # Real subprocess imports exercise the installed-copy ambiguity, not mocks of
+    # metadata or numerical execution. Matching wheel/source copies remain usable.
+    root = Path(__file__).resolve().parents[1]
+    package = tmp_path / "quantaforge"
+    shutil.copytree(root / "src/quantaforge", package, ignore=shutil.ignore_patterns("__pycache__"))
+    simulator = package / "cpu/simulator.py"
+    if changed_source:
+        simulator.write_text(simulator.read_text() + "\n# A different installed source snapshot.\n")
+    output = tmp_path / "result.json"
+    script = textwrap.dedent("""\
+        import sys
+        from pathlib import Path
+        import quantaforge.cpu.simulator
+        from benchmarks.benchmark_gates import main
+
+        assert Path(quantaforge.cpu.simulator.__file__).resolve() == Path(sys.argv[1]).resolve()
+        raise SystemExit(main([
+            '--qubits', '2', '--operations', 'H', '--warmups', '1', '--repetitions', '3',
+            '--output', sys.argv[2],
+        ]))
+    """)
+    completed = subprocess.run(
+        [sys.executable, "-c", script, str(simulator), str(output)],
+        cwd=root,
+        env=dict(os.environ, PYTHONPATH=str(tmp_path)),
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    if changed_source:
+        assert completed.returncode == 2, completed.stderr
+        assert "loaded simulator source differs from this checkout" in completed.stderr
+        assert not output.exists()
+    else:
+        assert completed.returncode == 0, completed.stderr
+        metadata = json.loads(output.read_text())["metadata"]
+        source = metadata["loaded_simulator_sources"]["quantaforge.cpu.simulator"]
+        assert Path(source["path"]) == simulator.resolve()
+        assert source["sha256"] == metadata["source_sha256"]["src/quantaforge/cpu/simulator.py"]

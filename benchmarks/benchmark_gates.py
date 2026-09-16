@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib
 import importlib.metadata
 import json
 import os
@@ -61,6 +62,25 @@ def _command(args: list[str]) -> str | None:
 
 def _metadata() -> dict:
     root = str(Path(__file__).resolve().parents[1])
+    source_hashes = {
+        name: hashlib.sha256((Path(root) / name).read_bytes()).hexdigest()
+        for name in MEASURED_SOURCES
+    }
+    loaded_sources = {}
+    for name in MEASURED_SOURCES:
+        if not name.startswith("src/"):
+            continue
+        module_name = name.removeprefix("src/").removesuffix(".py").replace("/", ".")
+        module_name = module_name.removesuffix(".__init__")
+        module = importlib.import_module(module_name)
+        loaded_path = Path(module.__file__).resolve()
+        loaded_hash = hashlib.sha256(loaded_path.read_bytes()).hexdigest()
+        if loaded_hash != source_hashes[name]:
+            raise ValueError(
+                f"loaded simulator source differs from this checkout: {module_name} "
+                f"at {loaded_path}; install this checkout with python -m pip install -e ."
+            )
+        loaded_sources[module_name] = {"path": str(loaded_path), "sha256": loaded_hash}
     git_status = _command(["git", "-C", root, "status", "--porcelain"])
     cpu = None
     if platform.system() == "Darwin":
@@ -93,10 +113,8 @@ def _metadata() -> dict:
         "threadpools_if_available": pools,
         "git_revision": _command(["git", "-C", root, "rev-parse", "HEAD"]),
         "git_dirty": None if git_status is None else bool(git_status),
-        "source_sha256": {
-            name: hashlib.sha256((Path(root) / name).read_bytes()).hexdigest()
-            for name in MEASURED_SOURCES
-        },
+        "source_sha256": source_hashes,
+        "loaded_simulator_sources": loaded_sources,
         "timer": "time.perf_counter_ns",
         "timer_resolution_seconds": time.get_clock_info("perf_counter").resolution,
     }
