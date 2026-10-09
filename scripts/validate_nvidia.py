@@ -17,6 +17,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TEGRA_RELEASE = Path("/etc/nv_tegra_release")
 DEVICE_MODEL = Path("/proc/device-tree/model")
+EXPECTED_VALIDATOR_CHECKS = 108
+EXPECTED_GPU_TESTS = 673
 
 
 def collect_device_metadata(driver: dict, environment: dict) -> dict:
@@ -94,15 +96,18 @@ def junit_counts(path: Path) -> dict[str, int]:
 
 
 def validator_passed(report: dict, exit_code: int | None) -> bool:
-    """an exit code alone, or a zero-check pass, is insufficient evidence."""
+    """require the complete deterministic suite and a successful process."""
+    if not isinstance(report, dict) or not isinstance(report.get("environment"), dict):
+        return False
     checks = report.get("checks")
     return (
         exit_code == 0
         and report.get("status") == "PASS"
-        and report.get("environment", {}).get("usable") is True
+        and report["environment"].get("usable") is True
         and isinstance(checks, list)
-        and len(checks) > 0
-        and report.get("checks_passed") == len(checks)
+        and len(checks) == EXPECTED_VALIDATOR_CHECKS
+        and type(report.get("checks_passed")) is int
+        and report["checks_passed"] == EXPECTED_VALIDATOR_CHECKS
     )
 
 
@@ -215,9 +220,15 @@ def main(argv: list[str] | None = None) -> int:
                 )
                 counts = junit_counts(output / "gpu-tests.xml")
                 report["gpu_tests"] = counts
-                if pytest["exit_code"] != 0 or counts["passed"] != counts["tests"]:
+                if (
+                    pytest["exit_code"] != 0
+                    or counts["tests"] != EXPECTED_GPU_TESTS
+                    or counts["passed"] != EXPECTED_GPU_TESTS
+                    or any(counts[key] != 0 for key in ("failures", "errors", "skipped"))
+                ):
                     report["failure"] = (
-                        "GPU pytest failed or skipped cases; full execution is required"
+                        f"GPU pytest requires exactly {EXPECTED_GPU_TESTS} passing cases "
+                        "with no failures, errors, or skips"
                     )
                 elif not report["device_metadata"]["complete"] or packages["exit_code"] != 0:
                     report["failure"] = "driver/package metadata capture failed"
