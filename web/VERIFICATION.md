@@ -1,5 +1,36 @@
 # Local verification
 
+## review refresh, 2026-10-09
+
+Starting revision: `64991da`, branch `codex/web-demo`. The existing implementation
+was rechecked before publication for review. No NVIDIA hardware was available.
+
+- Python 3.12.11: 840 passed, 820 skipped, zero failures; the skips remain 673
+  device cases and 147 interpreter cases. Qiskit comparisons ran.
+- Ruff lint/format, `pip check`, and source/wheel builds passed.
+- Node 24.21.0: clean `npm ci`, TypeScript check, and all 26 Playwright tests
+  passed. The browser suite builds and serves the production bundle.
+- The install exposed [GHSA-68fv-2mgg-jv7q](https://github.com/advisories/GHSA-68fv-2mgg-jv7q)
+  in the transitive development dependency `source-map-js`. Only its lockfile
+  entry changed, from 1.2.1 to 1.2.2. Clean install, typecheck, production build,
+  and all 26 browser tests passed again; `npm audit` reported zero vulnerabilities.
+- Desktop and 360px expanded-metadata screenshots were visually inspected.
+  Independent review verified source hashes, benchmark byte identity, and all
+  16 median/p95 values against the saved raw trials.
+
+Local Python JUnit is saved under ignored
+`validation/results/session-20261009/web-base-tests.xml`. Browser screenshots
+remain under ignored `web/test-results/`. This refresh uses the installed
+Playwright Chromium cache and an isolated Node 24 runtime in `/tmp`.
+Other browser engines and physical mobile devices remain untested.
+
+Hosted checks and integration are tracked in
+[issue #3](https://github.com/rzcheng/QuantumVis/issues/3). The feature branch is
+for review; this record does not establish merge or deployment. The historical
+verification below describes its original session.
+
+## initial verification, 2026-09-16
+
 Verified on 2026-09-16 (America/New_York), on the development Mac. This record
 covers the static engineering demo; it is not NVIDIA validation or a performance
 improvement claim. The GitHub workflows are prepared but have not run remotely.

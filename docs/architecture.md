@@ -116,6 +116,6 @@ optimal before it is measured.
 
 The CPU benchmark now consumes the existing public API and saves metadata plus raw
 trial data as JSON. GPU timings remain deferred until correctness passes. The
-future static website will consume exported artifacts, not call Python. There is no backend server,
+static website consumes exported CPU artifacts without calling Python. There is no backend server,
 database, authentication system, cloud infrastructure, or browser GPU runtime in
 this first milestone.
