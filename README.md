@@ -1,4 +1,4 @@
-# QuantaForge
+# QuantumVis
 
 A state-vector quantum simulator built around a NumPy reference and custom Triton
 kernels. The main work is mapping quantum gates to GPU memory access and checking
@@ -12,15 +12,25 @@ compiled or run on NVIDIA hardware yet**. There are no GPU performance claims.
 - CPU: X, Y, Z, H, S, T, RX, RY, RZ, CX/CNOT, CZ, probabilities, and seeded sampling.
 - GPU: one generic single-qubit kernel, runtime checks, and validation tools.
   Controlled GPU gates and sampling are not implemented.
-- Tests: **739 passed, 673 GPU cases skipped** on the development Mac, including
-  185 optional Qiskit comparisons. Hosted CI is configured but has not run.
+- CPU/host tests: **797 passed, 0 failed** on the development Mac, including
+  185 optional Qiskit comparisons.
+- Interpreter validation: **147 passed, zero skips per version** in hosted Linux
+  CI with Triton 3.6.0 and 3.8.0. All 147 skip on the Mac; this is not GPU execution.
+- Compile-only validation: manual Linux probe prepared for SM 8.7, unexecuted.
+  The public Triton CLI has a driver-dependent output path; no internal workaround.
+- Real NVIDIA validation: all 673 device cases skipped locally; still pending.
 - Benchmarks: a saved CPU baseline with raw timings. GPU measurements come later.
 
 See [validation records](docs/validation.md) for environments and exact checks.
 
+The project and Python package are now QuantumVis (`quantumvis`). After updating
+an existing checkout, run `python -m pip uninstall quantaforge`, then reinstall
+with `python -m pip install -e .`. Update imports to `quantumvis`; historical
+validation records and benchmark artifacts retain their original names and hashes.
+
 ## quick start
 
-From the checkout, with Python 3.12+:
+From the checkout, with Python 3.11+ (3.12 shown):
 
 ```bash
 python3.12 -m venv .venv
@@ -33,7 +43,7 @@ python examples/ghz_state.py
 NumPy is the only required dependency.
 
 ```python
-from quantaforge import Circuit, CPUSimulator
+from quantumvis import Circuit, CPUSimulator
 
 circuit = Circuit(2).h(0).cx(0, 1)
 result = CPUSimulator().run(circuit)
@@ -104,6 +114,7 @@ The initial target is Linux/NVIDIA with compute capability 8.0+. Follow the
 Once the environment is ready:
 
 ```bash
+python -m quantumvis.gpu_preflight --smoke
 python scripts/validate_nvidia.py --output validation/results/nvidia-first-run
 ```
 
@@ -111,6 +122,14 @@ This runs the deterministic validator and full GPU tests, saving results,
 environment details, and source hashes in a new directory. It requires zero
 failed or skipped GPU cases. Missing hardware returns `UNAVAILABLE`; a compiler
 or numerical failure remains an error. There is no automatic CPU fallback.
+Identified Jetson Orin boards can use L4T/device-tree and CUDA metadata when
+`nvidia-smi` is absent. This has host-side tests, but has not run on a Jetson.
+The [guide](docs/gpu-validation.md) separates CPU correctness, interpreter,
+compile-only, device validation, and performance evidence, with exact commands.
+Use the [first-device runbook](docs/first-nvidia-run.md) for precheck, correctness,
+then the small post-acceptance timing smoke. Orin's exact software stack remains
+unverified; the [compatibility table](docs/gpu-validation.md#compatibility-and-installation-audit)
+does not infer support from a model name or a published ARM wheel.
 
 ## benchmarks
 
@@ -130,8 +149,8 @@ simulator has been measured. See [benchmark methodology](docs/benchmarking.md).
 
 ## next steps
 
-1. Add hardware-free Triton interpreter and compile checks on Linux.
-2. Validate the single-qubit backend on NVIDIA hardware.
+1. Confirm the NVIDIA machine's package/driver compatibility with preflight.
+2. Validate the single-qubit backend on compatible NVIDIA hardware; this is the next acceptance milestone.
 3. Add controlled GPU gates, then measure the GPU baseline.
 4. Pick one optimization from profiling evidence.
 5. Build a static demo using clearly labeled recorded results.

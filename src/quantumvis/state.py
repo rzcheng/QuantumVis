@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from quantaforge._validation import integer
-from quantaforge.measurement import _validated_amplitudes, probabilities, sample
+from quantumvis._validation import integer
+from quantumvis.measurement import _validated_amplitudes, probabilities, sample
 
 
 class StateVector:

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
-from quantaforge import StateVector
+from quantumvis import StateVector
 
 from .oracle import ATOL, random_state
 

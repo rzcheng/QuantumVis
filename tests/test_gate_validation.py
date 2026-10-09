@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from quantaforge.gates import Gate
+from quantumvis.gates import Gate
 
 
 @pytest.mark.parametrize("name", ("", "UNKNOWN", "SWAP", "MEASURE"))

@@ -11,7 +11,7 @@ No GPU framework installation is needed to complete the CPU work.
 
 ## Milestone 0: foundation
 
-Create a Python 3.12+ package in `src/quantaforge`, a small development dependency
+Create a Python 3.12+ package in `src/quantumvis`, a small development dependency
 set (pytest, Ruff, build), CPU CI, engineering rules, and technical documentation.
 Initialize one coherent Git branch and record logical commits where permitted.
 

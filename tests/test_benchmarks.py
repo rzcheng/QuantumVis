@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from benchmarks.benchmark_gates import MAX_QUBITS, METRIC, _reference_gate, benchmark_gates, main
-from quantaforge.gates import SINGLE_QUBIT_GATES, Gate
+from quantumvis.gates import SINGLE_QUBIT_GATES, Gate
 
 from .oracle import dense_operator, random_state
 
@@ -121,8 +121,8 @@ def test_cli_invalid_configuration_does_not_create_artifact(tmp_path):
 def test_benchmark_provenance_checks_the_source_actually_imported(tmp_path, changed_source):
     # check actual imports from a second copy, including a matching source tree.
     root = Path(__file__).resolve().parents[1]
-    package = tmp_path / "quantaforge"
-    shutil.copytree(root / "src/quantaforge", package, ignore=shutil.ignore_patterns("__pycache__"))
+    package = tmp_path / "quantumvis"
+    shutil.copytree(root / "src/quantumvis", package, ignore=shutil.ignore_patterns("__pycache__"))
     simulator = package / "cpu/simulator.py"
     if changed_source:
         simulator.write_text(simulator.read_text() + "\n# A different installed source snapshot.\n")
@@ -130,10 +130,10 @@ def test_benchmark_provenance_checks_the_source_actually_imported(tmp_path, chan
     script = textwrap.dedent("""\
         import sys
         from pathlib import Path
-        import quantaforge.cpu.simulator
+        import quantumvis.cpu.simulator
         from benchmarks.benchmark_gates import main
 
-        assert Path(quantaforge.cpu.simulator.__file__).resolve() == Path(sys.argv[1]).resolve()
+        assert Path(quantumvis.cpu.simulator.__file__).resolve() == Path(sys.argv[1]).resolve()
         raise SystemExit(main([
             '--qubits', '2', '--operations', 'H', '--warmups', '1', '--repetitions', '3',
             '--output', sys.argv[2],
@@ -154,6 +154,6 @@ def test_benchmark_provenance_checks_the_source_actually_imported(tmp_path, chan
     else:
         assert completed.returncode == 0, completed.stderr
         metadata = json.loads(output.read_text())["metadata"]
-        source = metadata["loaded_simulator_sources"]["quantaforge.cpu.simulator"]
+        source = metadata["loaded_simulator_sources"]["quantumvis.cpu.simulator"]
         assert Path(source["path"]) == simulator.resolve()
-        assert source["sha256"] == metadata["source_sha256"]["src/quantaforge/cpu/simulator.py"]
+        assert source["sha256"] == metadata["source_sha256"]["src/quantumvis/cpu/simulator.py"]

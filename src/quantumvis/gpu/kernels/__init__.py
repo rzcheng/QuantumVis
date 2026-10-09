@@ -3,7 +3,7 @@
 import numpy as np
 from numpy.typing import ArrayLike
 
-from quantaforge._validation import integer
+from quantumvis._validation import integer
 
 BLOCK_SIZE = 256
 # 40 qubits exceed the 2**31 - 1 grid limit at 256 pairs per block.
@@ -40,6 +40,6 @@ def apply_single_qubit(real, imag, matrix: ArrayLike, target: int) -> None:
     callers handle synchronization. normalization and unitarity are unchecked;
     use GPUSimulator for validated inputs and synchronous results.
     """
-    from quantaforge.gpu.kernels.single_qubit import apply_single_qubit as apply
+    from quantumvis.gpu.kernels.single_qubit import apply_single_qubit as apply
 
     apply(real, imag, matrix, target)

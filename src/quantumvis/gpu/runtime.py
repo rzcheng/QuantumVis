@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from importlib import import_module
 from importlib.util import find_spec
 
-from quantaforge._validation import integer
+from quantumvis._validation import integer
 
 
 @dataclass(frozen=True, slots=True)

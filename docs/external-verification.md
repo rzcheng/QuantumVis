@@ -1,7 +1,7 @@
 # Independent Qiskit comparisons
 
 The optional `verification` extra installs Qiskit for a second CPU correctness
-reference. It does not participate in QuantaForge execution, benchmarking, or GPU
+reference. It does not participate in QuantumVis execution, benchmarking, or GPU
 runtime detection. The normal installation still requires only NumPy. Qiskit Aer,
 IBM services, credentials, and network calls are not used by these tests.
 
@@ -12,7 +12,7 @@ python -m pytest -q tests/test_qiskit_reference.py --junitxml=validation/results
 
 The tests construct Qiskit circuits from named operations, qubit positions, and
 angles, then use its [Statevector.evolve API](https://quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.quantum_info.Statevector).
-They never supply QuantaForge's gate matrices to the reference. Both simulators
+They never supply QuantumVis's gate matrices to the reference. Both simulators
 use [qubit 0 as the least significant bit](https://quantum.cloud.ibm.com/docs/en/guides/bit-ordering),
 so amplitude arrays are compared directly, without reversing bits. Comparisons
 use complex128, absolute tolerance `1e-12`, and relative tolerance zero. Raw

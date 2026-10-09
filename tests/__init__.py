@@ -1,1 +1,1 @@
-"""numerical and api regression tests for quantaforge."""
+"""numerical and api regression tests for quantumvis."""

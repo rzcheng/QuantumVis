@@ -34,7 +34,7 @@ exists, but actual NVIDIA correctness and performance are still unverified.
    times complete one-gate `run()` calls, including validation and copies. A GPU
    kernel-only time would not be a fair direct comparison to that metric.
 9. **How independent is a reference?** Trace the Qiskit comparison from named
-   gates to state evolution. Explain why feeding it QuantaForge's own matrices
+   gates to state evolution. Explain why feeding it QuantumVis's own matrices
    would miss matrix-definition bugs, and why comparing only final probabilities
    would miss phase errors. The prefix checks locate the first disagreement;
    neither an external library nor a large passing test count is a proof for all

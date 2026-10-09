@@ -11,9 +11,9 @@ from datetime import UTC, datetime
 import numpy as np
 from numpy.typing import NDArray
 
-from quantaforge import Circuit, CPUSimulator
-from quantaforge.gates import Gate
-from quantaforge.gpu.runtime import gpu_status
+from quantumvis import Circuit, CPUSimulator
+from quantumvis.gates import Gate
+from quantumvis.gpu.runtime import gpu_status
 
 GATE_NAMES = ("X", "Y", "Z", "H", "S", "T", "RX", "RY", "RZ")
 SEED = 20260914
@@ -145,7 +145,7 @@ def raw_unitary_check(num_qubits: int, target: int, seed: int, device=None) -> C
     """execute the actual kernel against an independent small dense rounded oracle."""
     import torch
 
-    from quantaforge.gpu.kernels.single_qubit import apply_single_qubit
+    from quantumvis.gpu.kernels.single_qubit import apply_single_qubit
 
     rng = np.random.default_rng(seed)
     matrix, _ = np.linalg.qr(rng.normal(size=(2, 2)) + 1j * rng.normal(size=(2, 2)))
@@ -173,7 +173,7 @@ def raw_unitary_check(num_qubits: int, target: int, seed: int, device=None) -> C
 
 def run_checks(device=None) -> Iterator[CheckResult]:
     """yield completed checks; no simulated interpreter or cpu fallback is used."""
-    from quantaforge.gpu import GPUSimulator
+    from quantumvis.gpu import GPUSimulator
 
     simulator = GPUSimulator(device=device)
     cpu = CPUSimulator()

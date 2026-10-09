@@ -3,10 +3,10 @@
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from quantaforge.circuit import Circuit
-from quantaforge.gates import Gate, single_qubit_matrix
-from quantaforge.measurement import _validated_amplitudes
-from quantaforge.state import StateVector
+from quantumvis.circuit import Circuit
+from quantumvis.gates import Gate, single_qubit_matrix
+from quantumvis.measurement import _validated_amplitudes
+from quantumvis.state import StateVector
 
 
 def _apply_single_qubit(state: NDArray[np.complex128], gate: Gate) -> None:

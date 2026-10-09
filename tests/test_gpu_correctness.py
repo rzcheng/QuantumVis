@@ -4,10 +4,10 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
-from quantaforge import Circuit, CPUSimulator, StateVector
-from quantaforge.gates import Gate
-from quantaforge.gpu import gpu_status
-from quantaforge.validate_gpu import (
+from quantumvis import Circuit, CPUSimulator, StateVector
+from quantumvis.gates import Gate
+from quantumvis.gpu import gpu_status
+from quantumvis.validate_gpu import (
     GATE_NAMES,
     SEED,
     analytical_cases,
@@ -35,7 +35,7 @@ def gpu_device():
 
 @pytest.fixture(scope="module")
 def gpu_simulator(gpu_device):
-    from quantaforge.gpu import GPUSimulator
+    from quantumvis.gpu import GPUSimulator
 
     return GPUSimulator(device=gpu_device)
 
@@ -148,7 +148,7 @@ def test_cpu_statevector_input_and_prior_result_are_preserved(gpu_simulator, num
 def test_raw_storage_contract_rejects_invalid_inputs(gpu_device, case, exception, message):
     import torch
 
-    from quantaforge.gpu.kernels.single_qubit import apply_single_qubit
+    from quantumvis.gpu.kernels.single_qubit import apply_single_qubit
 
     device = torch.device("cuda", gpu_device)
     real = torch.zeros(8, dtype=torch.float32, device=device)
@@ -218,8 +218,8 @@ def test_large_grid_mixed_targets_preserve_sequential_order(gpu_simulator, seed_
 def test_raw_offset_views_preserve_guard_regions(gpu_device, num_qubits, target, offset):
     import torch
 
-    from quantaforge.gpu.kernels import BLOCK_SIZE
-    from quantaforge.gpu.kernels.single_qubit import apply_single_qubit
+    from quantumvis.gpu.kernels import BLOCK_SIZE
+    from quantumvis.gpu.kernels.single_qubit import apply_single_qubit
 
     device = torch.device("cuda", gpu_device)
     initial = random_state(num_qubits, SEED + target).astype(np.complex64)

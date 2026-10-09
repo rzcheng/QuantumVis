@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from quantaforge.gpu import runtime
+from quantumvis.gpu import runtime
 
 
 @pytest.fixture
@@ -176,8 +176,8 @@ class BlockGPU(importlib.abc.MetaPathFinder):
         if fullname.split('.')[0] in {'torch', 'triton'}:
             raise AssertionError('optional framework imported: ' + fullname)
 sys.meta_path.insert(0, BlockGPU())
-from quantaforge import Circuit, CPUSimulator
-from quantaforge.gpu import GPUSimulator, gpu_status
+from quantumvis import Circuit, CPUSimulator
+from quantumvis.gpu import GPUSimulator, gpu_status
 assert CPUSimulator().run(Circuit(1).x(0)).amplitudes[1] == 1
 """
     result = subprocess.run(

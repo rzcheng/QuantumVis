@@ -1,4 +1,4 @@
-"""optional independent simulator comparisons; no quantaforge matrices in the oracle."""
+"""optional independent simulator comparisons; no quantumvis matrices in the oracle."""
 
 import platform
 from importlib.util import find_spec
@@ -7,8 +7,8 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
-from quantaforge import Circuit, CPUSimulator
-from quantaforge.gates import Gate
+from quantumvis import Circuit, CPUSimulator
+from quantumvis.gates import Gate
 
 from .oracle import ATOL, random_state
 
@@ -20,7 +20,7 @@ SINGLE_GATES = ("X", "Y", "Z", "H", "S", "T", "RX", "RY", "RZ")
 @pytest.fixture(scope="module")
 def qiskit_api(record_testsuite_property):
     if find_spec("qiskit") is None:
-        pytest.skip("optional Qiskit comparison: install quantaforge[verification]")
+        pytest.skip("optional Qiskit comparison: install quantumvis[verification]")
     # a broken installed reference must fail visibly, not turn into a skip.
     import qiskit
     from qiskit.quantum_info import Statevector
