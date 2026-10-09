@@ -3,35 +3,115 @@
 import argparse
 import hashlib
 import json
+import os
 import sys
 import time
 from dataclasses import asdict
 from pathlib import Path
+from xml.etree.ElementTree import ParseError
 
 import numpy as np
 
 from benchmarks.benchmark_gates import _metadata
 from quantumvis import Circuit, CPUSimulator
 from quantumvis.gpu import GPUSimulator, GPUUnavailableError
-from quantumvis.gpu.runtime import require_gpu
+from quantumvis.gpu.runtime import GPUStatus, require_gpu
 from quantumvis.validate_gpu import SEED, check_output, random_state
-from scripts.validate_nvidia import ROOT, source_hashes
+from scripts.validate_nvidia import (
+    EXPECTED_GPU_TESTS,
+    ROOT,
+    junit_counts,
+    source_hashes,
+    validator_passed,
+)
 
 
-def require_acceptance(path: Path) -> dict:
-    """tie the timing run to a complete acceptance report for this source snapshot."""
-    report = json.loads(path.read_text())
-    counts = report.get("gpu_tests") or {}
+def _read_acceptance(path: Path) -> dict:
+    try:
+        report = json.loads(path.read_text())
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise ValueError(f"invalid NVIDIA acceptance artifact {path}: {error}") from error
+    if not isinstance(report, dict):
+        raise ValueError(f"NVIDIA acceptance artifact must be a JSON object: {path}")
+    return report
+
+
+def require_acceptance(path: Path, status: GPUStatus | None = None) -> dict:
+    """require complete acceptance for this source and available runtime metadata."""
+    report = _read_acceptance(path)
+    expected = {
+        "tests": EXPECTED_GPU_TESTS,
+        "passed": EXPECTED_GPU_TESTS,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+    }
+    counts = report.get("gpu_tests")
     if (
-        report.get("status") != "PASS"
-        or counts.get("tests", 0) <= 0
-        or counts.get("passed") != counts.get("tests")
-        or any(counts.get(name) != 0 for name in ("failures", "errors", "skipped"))
+        type(report.get("schema_version")) is not int
+        or report["schema_version"] != 1
+        or report.get("status") != "PASS"
+        or not isinstance(counts, dict)
+        or any(
+            type(counts.get(key)) is not int or counts[key] != value
+            for key, value in expected.items()
+        )
         or report.get("source_sha256") != source_hashes(ROOT)
     ):
         raise ValueError(
-            "a passing, zero-skip NVIDIA acceptance report for this source is required"
+            "a complete, zero-skip NVIDIA acceptance report for this source is required"
         )
+    junit = path.with_name("gpu-tests.xml")
+    try:
+        recorded_counts = junit_counts(junit)
+    except (OSError, ParseError, KeyError, ValueError) as error:
+        raise ValueError(f"invalid NVIDIA acceptance artifact {junit}: {error}") from error
+    if recorded_counts != counts:
+        raise ValueError("NVIDIA acceptance gpu-tests.xml counts do not match summary.json")
+    commands = report.get("commands")
+    metadata = report.get("device_metadata")
+    if (
+        not isinstance(commands, dict)
+        or any(
+            not isinstance(commands.get(name), dict)
+            or type(commands[name].get("exit_code")) is not int
+            or commands[name]["exit_code"] != 0
+            for name in ("validator", "pytest")
+        )
+        or not isinstance(metadata, dict)
+        or metadata.get("complete") is not True
+    ):
+        raise ValueError(
+            "NVIDIA acceptance requires successful commands and complete device metadata"
+        )
+    validator = _read_acceptance(path.with_name("validator.stdout"))
+    if (
+        type(validator.get("schema_version")) is not int
+        or validator["schema_version"] != 1
+        or not validator_passed(validator, commands["validator"]["exit_code"])
+    ):
+        raise ValueError("NVIDIA acceptance requires a complete passing validator.stdout")
+    if validator.get("numpy_version") != np.__version__:
+        raise ValueError("NVIDIA acceptance environment mismatch: numpy_version")
+    if "cuda_visible_devices" not in report or report["cuda_visible_devices"] != os.environ.get(
+        "CUDA_VISIBLE_DEVICES"
+    ):
+        raise ValueError("NVIDIA acceptance environment mismatch: CUDA_VISIBLE_DEVICES")
+    if status is not None:
+        environment = validator["environment"]
+        capability = environment.get("compute_capability")
+        if not isinstance(capability, list) or any(type(part) is not int for part in capability):
+            raise ValueError("NVIDIA acceptance environment mismatch: compute_capability")
+        current = asdict(status)
+        if status.compute_capability is not None:
+            current["compute_capability"] = list(status.compute_capability)
+        for field, value in current.items():
+            if (
+                field not in environment
+                or type(environment[field]) is not type(value)
+                or environment[field] != value
+            ):
+                raise ValueError(f"NVIDIA acceptance environment mismatch: {field}")
     return report
 
 
@@ -47,6 +127,7 @@ def timed_call(operation, synchronize) -> tuple[object, int]:
 def benchmark(acceptance: Path) -> dict:
     require_acceptance(acceptance)
     status = require_gpu()
+    require_acceptance(acceptance, status)
     import torch
 
     import quantumvis.gpu.kernels.single_qubit as kernel_module
@@ -123,7 +204,7 @@ def benchmark(acceptance: Path) -> dict:
                 "p95_ns": float(np.percentile(samples, 95, method="linear")),
             }
         )
-    require_acceptance(acceptance)
+    require_acceptance(acceptance, status)
     return report
 
 

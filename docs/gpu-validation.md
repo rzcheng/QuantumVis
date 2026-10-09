@@ -264,8 +264,8 @@ python scripts/validate_nvidia.py --output validation/results/nvidia-first-run
 
 Use a new output directory for each attempt; existing evidence is never overwritten.
 This runs the deterministic validator first and, only after it passes, the full
-GPU pytest file. It requires nonempty passing validator output, positive pytest
-case counts with **zero failures/errors/skips**, driver/package metadata, and
+GPU pytest file. It requires exactly 108 passing validator checks and 673 passing
+pytest cases with **zero failures/errors/skips**, driver/package metadata, and
 unchanged source hashes throughout the run. Otherwise it exits nonzero. On this
 Mac it exits 2 with `UNAVAILABLE` and does not launch the GPU pytest step.
 
@@ -275,9 +275,11 @@ logs for every command, including compilation tracebacks. It also records
 `nvidia-smi` (or the guarded Jetson metadata above), package versions, Git
 revision/status when available, and SHA-256
 hashes of simulator, validator, tests, scripts, and dependency configuration.
-Source archives without Git work because the source hashes still identify the
-code. Reports under `validation/results/` are ignored by Git; retain and review
-them before committing a successful NVIDIA result.
+The expected suite sizes are explicit guards in `scripts/validate_nvidia.py`;
+review and update them deliberately if the acceptance suites change. Source
+archives without Git work because the source hashes still identify the code.
+Reports under `validation/results/` are ignored by Git; retain and review them
+before committing a successful NVIDIA result.
 
 Both subprocesses execute this checkout's source. The runner clears inherited
 `PYTEST_ADDOPTS`/`PYTEST_PLUGINS`, disables third-party pytest plugin autoload, and
