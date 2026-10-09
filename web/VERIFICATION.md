@@ -24,10 +24,20 @@ remain under ignored `web/test-results/`. This refresh uses the installed
 Playwright Chromium cache and an isolated Node 24 runtime in `/tmp`.
 Other browser engines and physical mobile devices remain untested.
 
-Hosted checks and integration are tracked in
-[issue #3](https://github.com/rzcheng/QuantumVis/issues/3). The feature branch is
-for review; this record does not establish merge or deployment. The historical
-verification below describes its original session.
+Hosted checks passed at `89ff50f`:
+[CPU/Qiskit](https://github.com/rzcheng/QuantumVis/actions/runs/37897424950),
+[interpreter](https://github.com/rzcheng/QuantumVis/actions/runs/37897424973), and
+[web](https://github.com/rzcheng/QuantumVis/actions/runs/37897424991).
+Python 3.11–3.14 each reported 655 passed and 1005 skips. The separate Qiskit
+job passed 185 cases; Triton 3.6.0 and 3.8.0 each passed 147 interpreter cases
+with zero skips. Chromium passed all 26 web tests. Compile-only was intentionally
+skipped; no device execution occurred. The CPU-job skips include all 673 device,
+147 interpreter, and 185 optional Qiskit cases.
+
+Integration remains tracked in [issue #3](https://github.com/rzcheng/QuantumVis/issues/3)
+and [draft PR #4](https://github.com/rzcheng/QuantumVis/pull/4), based on
+`feat/triton-backend`. This record does not establish merge or deployment.
+The historical verification below describes its original session.
 
 ## initial verification, 2026-09-16
 
