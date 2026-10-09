@@ -23,6 +23,9 @@ compiled or run on NVIDIA hardware yet**. There are no GPU performance claims.
 
 See [validation records](docs/validation.md) for environments and exact checks.
 
+The [static web demo](web/README.md) replays exported CPU circuits, illustrates
+amplitude-pair indexing, and displays the unchanged recorded CPU baseline.
+
 The project and Python package are now QuantumVis (`quantumvis`). After updating
 an existing checkout, run `python -m pip uninstall quantaforge`, then reinstall
 with `python -m pip install -e .`. Update imports to `quantumvis`; historical
@@ -151,9 +154,9 @@ simulator has been measured. See [benchmark methodology](docs/benchmarking.md).
 
 1. Confirm the NVIDIA machine's package/driver compatibility with preflight.
 2. Validate the single-qubit backend on compatible NVIDIA hardware; this is the next acceptance milestone.
-3. Add controlled GPU gates, then measure the GPU baseline.
-4. Pick one optimization from profiling evidence.
-5. Build a static demo using clearly labeled recorded results.
+3. Save the existing post-acceptance GPU timing smoke with its complete-call boundary.
+4. Review the device evidence and initial baseline before selecting further GPU work.
+5. Review and deploy the static demo after its separate web checks pass.
 
 ## notes
 
