@@ -153,7 +153,7 @@ simulator has been measured. See [benchmark methodology](docs/benchmarking.md).
 2. Validate the single-qubit backend on compatible NVIDIA hardware; this is the next acceptance milestone.
 3. Save the existing post-acceptance GPU timing smoke with its complete-call boundary.
 4. Review the device evidence and initial baseline before selecting further GPU work.
-5. Build a static demo using clearly labeled recorded results.
+5. Review and deploy the static demo after its separate web checks pass.
 
 ## notes
 
