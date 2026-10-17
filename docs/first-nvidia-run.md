@@ -36,8 +36,9 @@ python scripts/validate_nvidia.py \
 This runs the standalone `python -m quantumvis.validate_gpu --json` first, then
 the complete `tests/test_gpu_correctness.py` file. Require runner exit 0 and
 `acceptance/summary.json` status PASS: 108 standalone checks and 673 pytest cases,
-with zero failures/errors/skips. `validator.stdout`, `gpu-tests.xml`, and command
-stdout/stderr files preserve the results and any compilation traceback.
+with zero failures/errors/skips. The runner enforces both exact suite counts;
+a smaller passing subset does not count. `validator.stdout`, `gpu-tests.xml`, and
+command stdout/stderr files preserve the results and any compilation traceback.
 Metadata capture and unchanged source hashes are also required. Keep the whole
 directory, including failed attempts. No benchmark belongs in this stage.
 
@@ -49,7 +50,13 @@ python -m benchmarks.benchmark_gpu_smoke \
   --output validation/results/first-nvidia/gpu-smoke.json
 ```
 
-This refuses failed/skipped/stale acceptance reports and existing output files.
+This requires `summary.json`, `validator.stdout`, and `gpu-tests.xml` together,
+and refuses failed/skipped/truncated/stale reports and existing output files.
+Before timing, it compares the recorded NumPy version, `CUDA_VISIBLE_DEVICES`,
+and runtime fields (Python, PyTorch, Triton, CUDA build, device name/index and
+capability) against the current process. A mismatch requires a new acceptance
+run. These fields do not identify a physical board by UUID or compare driver
+versions; keep the same machine and installed driver through all stages.
 It measures H on target 0 at 8, 12, and 16 qubits: five warmups and 31 trials per
 size, synchronized before and after each timed call. JSON retains raw trials,
 median/p95, precision, GPU/software/source metadata, and the acceptance reference.

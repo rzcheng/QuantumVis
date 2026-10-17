@@ -1,5 +1,42 @@
 # Validation records
 
+## Acceptance evidence guards, 2026-10-09
+
+Starting revision: `3fc8db1`, branch `codex/nvidia-handoff`.
+[Issue #2](https://github.com/rzcheng/QuantumVis/issues/2) fixes reproduced host
+protocol gaps: the runner accepted partial passing suites, and the timing smoke
+accepted evidence without matching runtime metadata or the actual JUnit report.
+
+The runner now requires exactly 108 validator checks and 673 passing device
+cases. The smoke reads `summary.json`, `validator.stdout`, and `gpu-tests.xml`,
+requires consistent results and source hashes, and compares the recorded NumPy,
+Python, PyTorch, Triton, CUDA build, visible-device selection, device name/index,
+and capability to the current process before timing. Missing or inconsistent
+evidence is rejected without producing a timing artifact. Matching these fields
+does not establish physical-board UUID or installed-driver identity.
+
+| Check | Result |
+| --- | --- |
+| macOS arm64, Python 3.12.11, NumPy 2.3.5, Qiskit 2.5.2 | 938 passed, 820 skipped, zero failures |
+| Runner protocol suite | 87 passed, zero skips |
+| Timing-smoke protocol suite | 122 passed, zero skips |
+| Device suite collection only | 673 cases collected; no execution |
+| Ruff 0.15.7 lint / format | Passed; 39 Python files formatted |
+| Source archive / wheel build | Passed with `python -m build --no-isolation` |
+| Diff whitespace and independent review | Passed; review's missing-JUnit finding fixed and rechecked |
+
+Full verification used `PYTHONPATH=src` and the development checkout's Python
+virtual environment in the isolated worktree. The final JUnit report is retained
+under ignored `validation/results/session-20261009/final-guard-tests.xml`.
+The 820 skips are 673 NVIDIA cases and 147 interpreter cases. Protocol fixtures
+are explicitly synthetic and are not evidence of GPU numerical success.
+
+Production CPU/GPU sources, numerical tolerances, device/interpreter suites,
+the original smoke workload and timing boundary, and historical artifacts are
+unchanged. No GPU benchmark ran. The intended Jetson is unavailable this session;
+[issue #1](https://github.com/rzcheng/QuantumVis/issues/1) remains open for the
+actual device preflight, acceptance, and original post-acceptance timing smoke.
+
 ## Project rename, 2026-09-16
 
 The project was renamed to QuantumVis on 2026-09-16. Earlier records refer to the

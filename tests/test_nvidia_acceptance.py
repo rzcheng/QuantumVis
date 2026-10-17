@@ -52,10 +52,22 @@ def test_junit_rejects_mismatched_counters(tmp_path, field):
         acceptance.junit_counts(write_junit(tmp_path, '<testcase name="one"/>', **values))
 
 
+@pytest.mark.parametrize("field", ("tests", "failures", "errors", "skipped"))
+@pytest.mark.parametrize("value", ("1.0", "True", "invalid"))
+def test_junit_rejects_malformed_counters(tmp_path, field, value):
+    with pytest.raises(ValueError):
+        acceptance.junit_counts(write_junit(tmp_path, '<testcase name="one"/>', **{field: value}))
+
+
 @pytest.fixture
 def synthetic_validator_report():
     # only the artifact protocol is tested; no kernel return values are invented.
-    return {"status": "PASS", "environment": {"usable": True}, "checks": [{}], "checks_passed": 1}
+    return {
+        "status": "PASS",
+        "environment": {"usable": True},
+        "checks": [{} for _ in range(108)],
+        "checks_passed": 108,
+    }
 
 
 def test_validator_requires_process_and_report_agreement(synthetic_validator_report):
@@ -68,7 +80,14 @@ def test_validator_requires_process_and_report_agreement(synthetic_validator_rep
     "replacement",
     (
         {"checks": [], "checks_passed": 0},
+        {"checks": [{}], "checks_passed": 1},
+        {"checks": [{}] * 107, "checks_passed": 107},
+        {"checks": [{}] * 109, "checks_passed": 109},
         {"checks_passed": 2},
+        {"checks_passed": 108.0},
+        {"checks_passed": "108"},
+        {"checks_passed": True},
+        {"checks_passed": None},
         {"status": "UNAVAILABLE"},
         {"environment": {"usable": False}},
         {"environment": {"usable": "true"}},
@@ -77,6 +96,11 @@ def test_validator_requires_process_and_report_agreement(synthetic_validator_rep
 )
 def test_validator_rejects_incomplete_artifacts(synthetic_validator_report, replacement):
     assert not acceptance.validator_passed(synthetic_validator_report | replacement, 0)
+
+
+@pytest.mark.parametrize("report", (None, [], "PASS", {"status": "PASS", "environment": None}))
+def test_validator_rejects_malformed_reports(report):
+    assert not acceptance.validator_passed(report, 0)
 
 
 def test_command_retains_failure_stdout_stderr_and_exit_code(tmp_path):
@@ -274,13 +298,18 @@ def test_real_pytest_skip_has_zero_exit_but_is_rejected_as_acceptance(tmp_path):
     ("scenario", "expected_status", "expected_exit"),
     (
         ("complete", "PASS", 0),
+        ("single_test", "FAIL", 1),
+        ("missing_test", "FAIL", 1),
+        ("extra_test", "FAIL", 1),
         ("skip", "FAIL", 1),
         ("failure", "FAIL", 1),
+        ("error", "FAIL", 1),
         ("process_error", "FAIL", 1),
         ("driver_error", "FAIL", 1),
         ("packages_error", "FAIL", 1),
         ("source_changed", "FAIL", 1),
         ("empty_validator", "FAIL", 1),
+        ("single_validator", "FAIL", 1),
         ("invalid_validator_json", "FAIL", 1),
         ("orin_missing_smi", "PASS", 0),
         ("orin_skip", "FAIL", 1),
@@ -313,13 +342,27 @@ def test_evidence_aggregation_requires_every_condition(
                 code = 1
             if scenario == "empty_validator":
                 details.update(checks=[], checks_passed=0)
+            if scenario == "single_validator":
+                details.update(checks=[{}], checks_passed=1)
             content = "broken JSON" if scenario == "invalid_validator_json" else json.dumps(details)
             (directory / "validator.stdout").write_text(content)
         elif name == "pytest":
-            tag = {"skip": "skipped", "orin_skip": "skipped", "failure": "failure"}.get(scenario)
-            kwargs = {"skipped" if tag == "skipped" else "failures": 1} if tag else {}
-            body = (
-                f'<testcase name="case"><{tag}/></testcase>' if tag else '<testcase name="case"/>'
+            count = {"single_test": 1, "missing_test": 672, "extra_test": 674}.get(scenario, 673)
+            tag = {
+                "skip": "skipped",
+                "orin_skip": "skipped",
+                "failure": "failure",
+                "error": "error",
+            }.get(scenario)
+            fields = {"skipped": "skipped", "failure": "failures", "error": "errors"}
+            kwargs = {"tests": count} | ({fields[tag]: 1} if tag else {})
+            first_case = (
+                f'<testcase name="case-0"><{tag}/></testcase>'
+                if tag
+                else '<testcase name="case-0"/>'
+            )
+            body = first_case + "".join(
+                f'<testcase name="case-{index}"/>' for index in range(1, count)
             )
             path = write_junit(directory, body, **kwargs)
             path.rename(directory / "gpu-tests.xml")
@@ -339,7 +382,12 @@ def test_evidence_aggregation_requires_every_condition(
     assert acceptance.main(["--output", str(output)]) == expected_exit
     report = json.loads((output / "summary.json").read_text())
     assert report["status"] == expected_status
-    if scenario in {"empty_validator", "invalid_validator_json", "orin_validation_failed"}:
+    if scenario in {
+        "empty_validator",
+        "single_validator",
+        "invalid_validator_json",
+        "orin_validation_failed",
+    }:
         assert "pytest" not in called
     if expected_status == "FAIL":
         assert report["failure"]
