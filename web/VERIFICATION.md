@@ -1,4 +1,29 @@
-# Local verification
+# Verification records
+
+## publication review, 2026-10-17
+
+The release integrates web head `8b0820e` with `main` at `6efa07f`, including
+merged device preparation and evidence guards. No numerical implementation,
+tolerance, recorded artifact, or benchmark methodology changed in this review.
+
+- Combined Python 3.12.11 suite: 981 passed, 820 skipped, zero failures;
+  the skips are 673 NVIDIA cases and 147 interpreter cases. Qiskit ran.
+- Ruff lint/format and `git diff --check` passed; 41 Python files formatted.
+- Node 25.5.0: clean locked install, TypeScript/production build, and all 26
+  Playwright/Chromium tests passed. Install audit reported zero vulnerabilities.
+  Hosted web and Pages workflows use Node 24.
+- Independent review confirmed all nine circuit hashes, the byte-identical
+  historical benchmark, all 16 median/p95 calculations, and scoped Pages permissions.
+- UI text explicitly labels precomputed CPU data, complete CPU call latency,
+  and pending NVIDIA measurements. No real-device validation is implied.
+
+Local Python evidence is saved under ignored
+`validation/results/ui-release-20261017/`. Other browser engines and physical
+mobile devices remain untested. Publication is authorized; this pre-merge
+record does not itself prove deployment. The actual deployment result and live
+checks are recorded in [issue #3](https://github.com/rzcheng/QuantumVis/issues/3)
+and [PR #4](https://github.com/rzcheng/QuantumVis/pull/4). Historical records below
+retain their original branch and publication status.
 
 ## review refresh, 2026-10-09
 

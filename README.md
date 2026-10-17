@@ -12,7 +12,7 @@ compiled or run on NVIDIA hardware yet**. There are no GPU performance claims.
 - CPU: X, Y, Z, H, S, T, RX, RY, RZ, CX/CNOT, CZ, probabilities, and seeded sampling.
 - GPU: one generic single-qubit kernel, runtime checks, and validation tools.
   Controlled GPU gates and sampling are not implemented.
-- CPU/host tests: **797 passed, 0 failed** on the development Mac, including
+- CPU/host tests: **981 passed, 0 failed** on the development Mac, including
   185 optional Qiskit comparisons.
 - Interpreter validation: **147 passed, zero skips per version** in hosted Linux
   CI with Triton 3.6.0 and 3.8.0. All 147 skip on the Mac; this is not GPU execution.
@@ -21,10 +21,12 @@ compiled or run on NVIDIA hardware yet**. There are no GPU performance claims.
 - Real NVIDIA validation: all 673 device cases skipped locally; still pending.
 - Benchmarks: a saved CPU baseline with raw timings. GPU measurements come later.
 
-See [validation records](docs/validation.md) for environments and exact checks.
+See [validation records](docs/validation.md) and the [web release checks](web/VERIFICATION.md)
+for environments and exact checks.
 
-The [static web demo](web/README.md) replays exported CPU circuits, illustrates
-amplitude-pair indexing, and displays the unchanged recorded CPU baseline.
+The [static web demo](https://rzcheng.github.io/QuantumVis/) replays exported CPU
+circuits, illustrates amplitude-pair indexing, and displays the unchanged recorded
+CPU baseline. See [web setup and verification](web/README.md) for local use.
 
 The project and Python package are now QuantumVis (`quantumvis`). After updating
 an existing checkout, run `python -m pip uninstall quantaforge`, then reinstall
@@ -156,7 +158,6 @@ simulator has been measured. See [benchmark methodology](docs/benchmarking.md).
 2. Validate the single-qubit backend on compatible NVIDIA hardware; this is the next acceptance milestone.
 3. Save the existing post-acceptance GPU timing smoke with its complete-call boundary.
 4. Review the device evidence and initial baseline before selecting further GPU work.
-5. Review and deploy the static demo after its separate web checks pass.
 
 ## notes
 

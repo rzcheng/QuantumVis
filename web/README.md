@@ -82,7 +82,7 @@ Circuit recordings use complex128 CPU values; the illustrated Triton storage is
 split float32. Display rounding and near-zero phase suppression do not modify
 the exported data.
 
-## deployment, prepared but not published
+## deployment
 
 Vite uses base `/QuantumVis/` and static multi-page mode (no SPA fallback).
 `web.yml` is independent of the existing lightweight Python CPU workflow and
@@ -94,9 +94,11 @@ repository's default branch for both build and deployment. Non-default manual
 runs skip both jobs. Only the deploy job has Pages write/OIDC permissions.
 The default branch was verified as `main`; update the push filter if renamed.
 
-The remaining publication step is to review/merge these changes onto the default
-branch, enable **Settings → Pages → GitHub Actions**, and restrict the
-`github-pages` environment's deployment branches to the default branch. Then
-run the Pages workflow from that branch. None of those remote changes are made
-by the local implementation. Source/documentation links are pinned to the
-implementation commit used when the demo was built.
+The site URL is https://rzcheng.github.io/QuantumVis/. Repository setup uses
+**Settings → Pages → GitHub Actions** and restricts the `github-pages`
+environment to `main`. Merging to `main` starts the tested Pages workflow;
+manual redeploys must also select `main`. Confirm the deploy job succeeds and
+check the live circuit controls and JSON downloads before calling a release
+published. Release results are tracked in [issue #3](https://github.com/rzcheng/QuantumVis/issues/3).
+Source/documentation links are pinned to the implementation commit used when
+the demo was built.
