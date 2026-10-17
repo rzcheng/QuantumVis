@@ -227,7 +227,7 @@ official wheel; do not substitute an unverified combination silently.
 set -e
 unset TRITON_INTERPRET
 nvidia-smi
-git clone --branch feat/triton-backend https://github.com/rzcheng/QuantumVis.git
+git clone --branch main https://github.com/rzcheng/QuantumVis.git
 cd QuantumVis
 python3.12 -m venv .venv
 source .venv/bin/activate
