@@ -1,5 +1,65 @@
 # Validation records
 
+## Public compile-only probe, 2026-10-18
+
+Dispatched the existing `triton-validation.yml` workflow on `main` at
+`3814b0f8de85ce52b15210a5f220e121b9cf859f`, with `compile_only=true`.
+[Run 39154822044](https://github.com/rzcheng/QuantumVis/actions/runs/39154822044)
+finished with a failed compile-only job and two passing interpreter jobs.
+The workflow, production kernel, tests, tolerances, and compiler options were
+unchanged; no alternate compiler path or driver patch was used.
+
+| Evidence level | Observed result |
+| --- | --- |
+| Public CLI compile-only probe | FAIL, exit 1; `compilation_succeeded: null`; no compiled output saved |
+| Triton 3.6.0 interpreter | 147 passed, zero failures/errors/skips |
+| Triton 3.8.0 interpreter | 147 passed, zero failures/errors/skips |
+| Real NVIDIA device validation | Not executed; [issue #1](https://github.com/rzcheng/QuantumVis/issues/1) remains open |
+| GPU timing | Not executed |
+
+Compile job environment: Ubuntu 24.04.5 x64, runner image
+`ubuntu-24.04` version `20261012.334.1`, Python 3.12.15, Triton 3.8.0,
+PyTorch 2.10.0+cpu, NumPy 2.3.5. The public CLI received target `cuda:87:32`,
+`TARGET=0`, `BLOCK=256`, grid `1,1,1`, and four warps. Its defaults do not
+expose production's `enable_fp_fusion=False`; even a successful probe would
+cover only this specialization and these options.
+
+The actual traceback stops in `kernel.create_binder()`, whose
+`driver.active.get_current_target()` call raises
+`RuntimeError: 0 active drivers ([]). There should only be one.` This is earlier
+than the output-generation limitation anticipated in the original guide.
+The retained summary remains FAIL with unknown compilation success. The compile
+artifact contains only `summary.json`, an empty `stdout.txt`, and `stderr.txt`;
+no C stub, PTX, or cubin is present. This is a toolchain limitation in the
+existing CPU runner environment, not evidence of numerical kernel failure.
+
+Downloaded artifact hashes and JUnit counters were inspected independently.
+The saved kernel and workflow bytes match the dispatched commit; the compile
+summary and both interpreter reports contain the same kernel SHA-256:
+
+```text
+d2f67c409f05b4881ac2280098e6f284f0d751f184736936ea01a0a83d44599e
+```
+
+Both interpreter reports record seed `20260914`, split float32, Python 3.12.15,
+PyTorch 2.10.0+cpu, NumPy 2.3.5, and their respective Triton version. Their
+passing counts do not establish compilation or device execution.
+
+Local follow-up checks: 981 Python tests passed, 820 skipped (673 NVIDIA and
+147 interpreter), zero failures. Ruff lint/format and `git diff --check` passed.
+
+Unmodified artifacts, full job logs, run/artifact metadata, source copies, and
+a checksum inventory are retained locally under ignored
+`validation/results/compile-only-20261018-run39154822044/`. The original
+2026-10-18 documentation commit `00dbefd` was kept local on
+`codex/compile-only-probe`; that session did not push code or deploy the site.
+A [durable raw evidence copy](../validation/records/compile-only-2026-10-18/README.md)
+and derived provenance manifest are published with [issue #8](https://github.com/rzcheng/QuantumVis/issues/8).
+They preserve the original FAIL result and source identity; no new probe was run.
+No repository harness defect was found. The next required input is
+access to the intended Jetson and its installed JetPack/L4T, Python, CUDA-enabled
+PyTorch, Triton, and NumPy versions, followed by the existing first-device runbook.
+
 ## Acceptance evidence guards, 2026-10-09
 
 Starting revision: `3fc8db1`, branch `codex/nvidia-handoff`.

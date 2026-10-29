@@ -117,11 +117,11 @@ races, compiler transformations, or device scheduling failures.
 ### Compile-only boundary
 
 The manual `compile-only` job invokes Triton's public AOT CLI for `cuda:87:32`
-(SM 8.7, Orin), target qubit 0 and block size 256. Once the workflow is on the
-default branch and this branch is pushed:
+(SM 8.7, Orin), target qubit 0 and block size 256. The workflow is available on
+`main`:
 
 ```bash
-gh workflow run triton-validation.yml --ref feat/triton-backend -f compile_only=true
+gh workflow run triton-validation.yml --ref main -f compile_only=true
 ```
 
 The underlying Linux command, after the environment setup above, is:
@@ -136,21 +136,27 @@ TRITON_INTERPRET=0 python -m triton.tools.compile \
 ```
 
 **This is a diagnostic probe, not an established working CPU-only compilation
-path.** In [Triton 3.8.0's CLI source](https://github.com/triton-lang/triton/blob/v3.8.0/python/triton/tools/compile.py),
-output generation accesses `triton.runtime.driver.active` even with an explicit
-target. The CLI also does not expose production's `enable_fp_fusion=False`
-option. These limitations stop this subtask: no driver patch, internal compiler
-API, or alternate kernel is introduced. The manual job may fail on a CPU runner;
-its failure is retained, never converted into a pass or skip. It is opt-in so a
-known upstream limitation does not block CPU development on every push.
+path.** The [2026-10-18 run](https://github.com/rzcheng/QuantumVis/actions/runs/39154822044)
+failed with exit 1 during `kernel.create_binder()`: its call to
+`driver.active.get_current_target()` raised `RuntimeError: 0 active drivers ([]). There should only be one.`
+This happened before the anticipated driver-dependent output stage. No compiled
+output was saved; compilation success is not established.
+
+[Triton 3.8.0's public CLI](https://github.com/triton-lang/triton/blob/v3.8.0/python/triton/tools/compile.py)
+also accesses the active driver during output generation and does not expose
+production's `enable_fp_fusion=False` option. No driver patch, internal compiler
+API, or alternate kernel is introduced. The failed probe is retained, never
+converted into a pass or skip. It remains opt-in so this limitation does not
+block CPU development on every push.
 
 The job saves stdout/stderr and JSON with Python/Triton versions, target,
 capability, source hash, command, exit code, and status. `compilation_succeeded`
 is true only after CLI success; a failed CLI leaves it null because failure may
 occur after compilation but before output. Even success covers only that CLI
 specialization and its default options, not the production launch configuration.
-No compile-only result has been recorded yet. Do not spend another session
-working around this boundary before the first device run.
+The failed run's environment, source hashes, artifact inventory, and separate
+interpreter results are recorded in [validation records](validation.md#public-compile-only-probe-2026-10-18).
+Do not work around this boundary before the first device run.
 
 ## Jetson preparation and metadata
 

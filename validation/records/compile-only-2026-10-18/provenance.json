@@ -1,0 +1,90 @@
+{
+  "record_kind": "failed public compile-only probe; no device validation",
+  "manifest_kind": "derived from retained run metadata and artifact bytes",
+  "repository": "rzcheng/QuantumVis",
+  "run": {
+    "id": 39154822044,
+    "url": "https://github.com/rzcheng/QuantumVis/actions/runs/39154822044",
+    "event": "workflow_dispatch",
+    "source_revision": "3814b0f8de85ce52b15210a5f220e121b9cf859f",
+    "conclusion": "failure",
+    "created_at": "2026-10-18T18:35:07Z"
+  },
+  "workflow": {
+    "path": ".github/workflows/triton-validation.yml",
+    "sha256": "80f45286633642a924079cfe60f4c6bdf6b661df6168ae7c3e4879dd2d787719"
+  },
+  "kernel": {
+    "path": "src/quantumvis/gpu/kernels/single_qubit.py",
+    "sha256": "d2f67c409f05b4881ac2280098e6f284f0d751f184736936ea01a0a83d44599e"
+  },
+  "compile_artifact": {
+    "id": 12147000898,
+    "name": "triton-compile-only-probe",
+    "archive_digest": "sha256:53a3e73a5ae3fe8d1ffe58637dd0c309e98f974cb1866b8d371a4ca8d0d3c4c8"
+  },
+  "raw_files": {
+    "summary.json": {
+      "sha256": "a2da03c11fcac5ff74ac79d306a5a71cb61e6182301f660b1113d80bf421c259",
+      "size_bytes": 979
+    },
+    "stdout.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    "stderr.txt": {
+      "sha256": "57dec03feee53ab48f9ba34c084a5c1752db46397c608fe640c733725da0cec3",
+      "size_bytes": 1471
+    }
+  },
+  "interpreter_artifacts": [
+    {
+      "properties": {
+        "evidence_level": "interpreter validation",
+        "python_version": "3.12.15",
+        "triton_version": "3.6.0",
+        "torch_version": "2.10.0+cpu",
+        "numpy_version": "2.3.5",
+        "seed": "20260914",
+        "precision": "split float32",
+        "kernel_sha256": "d2f67c409f05b4881ac2280098e6f284f0d751f184736936ea01a0a83d44599e"
+      },
+      "counts": {
+        "tests": 147,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "junit_sha256": "720e9d51b3c28bf8fa16bfa7142a992aaf88e1aa54fd3ae0dc30c6cd1cfbeaf8",
+      "artifact_id": 12146258616,
+      "archive_digest": "sha256:d240d6acb6ee2937b326e2e816c6cc69c0321cd4c353a2077f4eee6695fe5023"
+    },
+    {
+      "properties": {
+        "evidence_level": "interpreter validation",
+        "python_version": "3.12.15",
+        "triton_version": "3.8.0",
+        "torch_version": "2.10.0+cpu",
+        "numpy_version": "2.3.5",
+        "seed": "20260914",
+        "precision": "split float32",
+        "kernel_sha256": "d2f67c409f05b4881ac2280098e6f284f0d751f184736936ea01a0a83d44599e"
+      },
+      "counts": {
+        "tests": 147,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "junit_sha256": "80a6c874b68cd69ed62a9dbe72079cf1276c4992d4b0b4f3a710c0fa9cd28394",
+      "artifact_id": 12146267337,
+      "archive_digest": "sha256:6235fb0ef607834a424b78f10cb6dd4e9b1538cf266a8afd77ad3ddaaac69735"
+    }
+  ],
+  "limitations": [
+    "compile probe failed; no compiled output was saved",
+    "CLI defaults do not expose production enable_fp_fusion=False",
+    "interpreter passes do not establish compiled or device correctness",
+    "no NVIDIA execution or GPU timing"
+  ]
+}
