@@ -50,9 +50,13 @@ Local follow-up checks: 981 Python tests passed, 820 skipped (673 NVIDIA and
 
 Unmodified artifacts, full job logs, run/artifact metadata, source copies, and
 a checksum inventory are retained locally under ignored
-`validation/results/compile-only-20261018-run39154822044/`. The local documentation
-branch is `codex/compile-only-probe`; this follow-up does not push code or deploy
-the site. No repository harness defect was found. The next required input is
+`validation/results/compile-only-20261018-run39154822044/`. The original
+2026-10-18 documentation commit `00dbefd` was kept local on
+`codex/compile-only-probe`; that session did not push code or deploy the site.
+A [durable raw evidence copy](../validation/records/compile-only-2026-10-18/README.md)
+and derived provenance manifest are published with [issue #8](https://github.com/rzcheng/QuantumVis/issues/8).
+They preserve the original FAIL result and source identity; no new probe was run.
+No repository harness defect was found. The next required input is
 access to the intended Jetson and its installed JetPack/L4T, Python, CUDA-enabled
 PyTorch, Triton, and NumPy versions, followed by the existing first-device runbook.
 
